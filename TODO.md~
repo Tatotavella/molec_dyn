@@ -1,0 +1,12 @@
+# TODO list
+- [ ] Hacer README
+- [ ] Documentación API
+- [ ] init_rv
+- [ ] promvar_v
+- [ ] promvar_f
+- [ ] eval_f
+- [ ] make_table
+- [ ] new_pos
+- [ ] new_vel
+- [ ] ord_verlet 
+
