@@ -40,6 +40,11 @@ int make_table(double (*func)(double), int nptos, double L, double *tabla);
 // Realiza una discretizacion de "func" en nptos con paso dr=L/nptos y los escribe 
 // en tabla
 
+double funcion_LJ(double r);//Devuelve el potencial para un cierto valor de r. Realiza el corte en el potencial a partir de rc.
+
+double funcion_fuerza(double r);//Devuelve la fuerza para un cierto valor de r. Realiza el corte en la fuerza a partir de rc.
+
+
 int new_pos(struct *past, struct *future, long int N, double L, double h);
 //Escribe las nuevas posiciones en "future" basandose en "past" y taylor a segundo
 //orden en la posicion
