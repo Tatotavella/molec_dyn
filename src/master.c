@@ -73,3 +73,109 @@ int init_rv(struct part *molec, long int N, double (*func)(double,double), doubl
 
     return 0;
 }
+
+
+int promvar_v(struct part *molec, long int N, double *prom, double *var){
+
+	/*
+	*	Esta función calcula el promedio y la varianza para un struct de N particulas
+	*	para las velocidades vx, vy y vz independientemente.
+	*	El resultado final es asignado a los punteros *prom y *var respectivamente.
+	*   Ejemplo:
+	*		double prom_vec[3];
+	*		double *prom;
+	*		prom = &prom_vec[0];
+	*/
+
+	int i;
+	// Promedio.
+	*(prom+0) = 0, *(prom+1) = 0, *(prom+2) = 0; // Se inicializan los valores en 0.
+	for (i=0; i<N; i++)
+	{
+		*(prom+0) = *(prom+0) + molec[i].vx;
+		*(prom+1) = *(prom+1) + molec[i].vy;
+		*(prom+2) = *(prom+2) + molec[i].vz;
+	}	
+	*(prom+0) = *(prom+0)/N, *(prom+1) = *(prom+1)/N, *(prom+2) = *(prom+2)/N;
+	
+	// Varianza.
+	*(var+0) = 0, *(var+1) = 0, *(var+2) = 0; // Se inicializan los valores en 0.
+	for (i=0; i<N; i++)
+	{
+		*(var+0) = *(var+0) + (molec[i].vx-*(prom+0))*(molec[i].vx-*(prom+0));
+		*(var+1) = *(var+1) + (molec[i].vy-*(prom+1))*(molec[i].vy-*(prom+1));
+		*(var+2) = *(var+2) + (molec[i].vz-*(prom+2))*(molec[i].vz-*(prom+2));
+	}	
+	*(var+0) = *(var+0)/(N-1), *(var+1) = *(var+1)/(N-1), *(var+2) = *(var+2)/(N-1);
+
+	return 0;
+
+} 
+
+
+int promvar_f(struct part *molec, long int N, double *prom, double *var){
+
+	/*
+	*	Esta función calcula el promedio y la varianza para un struct de N particulas
+	*	para las fuerzas fx, fy y fz independientemente.
+	*	El resultado final es asignado a los punteros *prom y *var respectivamente.
+	*	Ejemplo:
+	*		double prom_vec[3];
+	*		double *prom;
+	*		prom = &prom_vec[0];
+	*/
+
+	int i;
+	// Promedio.
+	*(prom+0) = 0, *(prom+1) = 0, *(prom+2) = 0; // Se inicializan los valores en 0.
+	for (i=0; i<N; i++)
+	{
+		*(prom+0) = *(prom+0) + molec[i].fx;
+		*(prom+1) = *(prom+1) + molec[i].fy;
+		*(prom+2) = *(prom+2) + molec[i].fz;
+	}	
+	*(prom+0) = *(prom+0)/N, *(prom+1) = *(prom+1)/N, *(prom+2) = *(prom+2)/N;
+	
+	// Varianza.
+	*(var+0) = 0, *(var+1) = 0, *(var+2) = 0; // Se inicializan los valores en 0.
+	for (i=0; i<N; i++)
+	{
+		*(var+0) = *(var+0) + (molec[i].fx-*(prom+0))*(molec[i].fx-*(prom+0));
+		*(var+1) = *(var+1) + (molec[i].fy-*(prom+1))*(molec[i].fy-*(prom+1));
+		*(var+2) = *(var+2) + (molec[i].fz-*(prom+2))*(molec[i].fz-*(prom+2));
+	}	
+	*(var+0) = *(var+0)/(N-1), *(var+1) = *(var+1)/(N-1), *(var+2) = *(var+2)/(N-1);
+
+	return 0;
+
+}
+
+
+double ord_verlet(struct part *molec, long int N, double L){
+
+	/*
+	*	Esta función realiza el calculo del ordenamiento de Verlet.
+	*	Esta función devuelve 1 cuando el sistema se encuentra puramente
+	* 	ordenado y 0 en el caso contrario.
+	*   Importante: Para su correcta utilización y por la forma en que se
+	*   define a (distancia entre moleculas), es importante que N sea un numero
+	*   tal que su raiz cubica sea un número entero.
+	*/
+
+	double lamda_x=0,lamda_y=0,lamda_z=0,lamda;
+	double pi = 3.14159265358979323846;
+	double a  = L/pow(N,1.0/3.0);
+
+	int i;
+	for (i=0; i<N; i++)
+	{
+		lamda_x = lamda_x + cos((2*pi/a)*(molec[i].x-a/2));
+		lamda_y = lamda_y + cos((2*pi/a)*(molec[i].y-a/2));
+		lamda_z = lamda_z + cos((2*pi/a)*(molec[i].z-a/2));
+	}
+	lamda_x=lamda_x/N, lamda_y=lamda_y/N, lamda_z=lamda_z/N;
+	lamda = (lamda_x+lamda_y+lamda_z)/3;
+
+	return lamda;
+
+}
