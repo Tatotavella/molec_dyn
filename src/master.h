@@ -24,7 +24,7 @@ struct part
 	double m; //Masa	
 };
 
-int init_rv(struct *part, long int N, double (*func)(double,double), double L, double T);
+int init_rv(struct part *molec, long int N, double (*func)(double,double), double L, double T);
 // Recibe una funcion y asigna al azar las velocidades de la distribucion "func" que recive (v,T). 
 // Ordena las particulas equiespaciadas.
 

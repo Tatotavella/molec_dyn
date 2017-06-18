@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "estructuras.h"
 #include <math.h>
+#include "master.h"
 
 int make_table(double(*funcion)(double), int numpoints, double L, double *tabla)
  {
@@ -35,3 +35,41 @@ double funcion_fuerza(double r)
 
   return f;
  }
+
+int init_rv(struct part *molec, long int N, double (*func)(double,double), double L, double T)
+{
+    int n = ceil(cbrt(N));
+    double a = L/n;
+
+    double vx_avg = 0;
+    double vy_avg = 0;
+    double vz_avg = 0;
+
+    for (long int i = 0; i < N; i++) {
+        long int l = i / (n * n);
+        long int k = (i - l * n * n) / n;
+        long int j = (i - l * n * n) % n;
+        molec[i].x = j*a + a/2;
+        molec[i].y = k*a + a/2;
+        molec[i].z = l*a + a/2;
+
+        molec[i].vx = (*func)(molec[i].m, T);
+        molec[i].vy = (*func)(molec[i].m, T);
+        molec[i].vz = (*func)(molec[i].m, T);
+        vx_avg += molec[i].vx;
+        vy_avg += molec[i].vy;
+        vz_avg += molec[i].vz;
+    }
+
+    vx_avg = vx_avg / N;
+    vy_avg = vy_avg / N;
+    vz_avg = vz_avg / N;
+
+    for (long int i = 0; i < N; i++) {
+        molec[i].vx -= vx_avg;
+        molec[i].vy -= vy_avg;
+        molec[i].vz -= vz_avg;
+    }
+
+    return 0;
+}
