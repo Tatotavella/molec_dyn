@@ -28,7 +28,7 @@ int boltzmann(struct part *molec, long int N)
 // se convierte el "nuevo" en viejo intercambiando
 // los punteros.
 
-int lj_table(double *e_table, double eps, double sg, double cut, double dr)
+int lj_table(struct part *molec, double *e_table, double eps, double sg, double cut, double dr)
 {
 	/*@brief devuelve la tabla llena de energias en e_table
 	 * 
@@ -84,6 +84,7 @@ int main(int argc, char **argv)
 	//struct particula molec[N];
 	struct part *molec_o = malloc( N * sizeof (struct part));
 	struct part *molec_n = malloc( N * sizeof (struct part));
+    struct part *molec = molec_o;
 
 	int k = 6;
 	
