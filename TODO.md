@@ -4,7 +4,4 @@
 - [ ] init_rv y distribucion de Boltzmann FEDERICO
 - [ ] promvar_v, promvar_f y ord_verlet JOAN
 - [X] make_table y Lennard Jones V y F LUCAS
-- [ ] new_pos, new_vel y eval_f FRANCO
-
-
-
+- [X] new_pos, new_vel y eval_f FRANCO
