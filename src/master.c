@@ -297,6 +297,7 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
     x_dir = -1 * dx/r_part;
     y_dir = -1 * dy/r_part;
     z_dir = -1 * dz/r_part;
+
     //Asignacion de la fuerza para la particula i y j
     molec[i].fx += pre_force * x_dir;
     molec[i].fy += pre_force * y_dir;
