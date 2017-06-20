@@ -1,6 +1,6 @@
 # Dinámica Molecular
 Implementación en lenguaje C  
-Authors:  
+Autores:  
 tavellafran@gmail.com  
 joancerretani@gmail.com  
 lucaslongo52@gmail.com  
