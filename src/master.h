@@ -1,17 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 
-struct part 
+struct part
 {
 	/* Propiedades de las particulas en un instante
 	 *
 	 *
 	 *
 	 */
-
-    double x; //Posiciones
-    double y;
+  double x; //Posiciones
+  double y;
 	double z;
 	double vx; //Velocidades
 	double vy;
@@ -21,11 +21,11 @@ struct part
 	double fz;
 	double e_p; // Energia potencial
 	double e_c; // Energia cinetica
-	double m; //Masa	
+	double m; //Masa
 };
 
 int init_rv(struct part *molec, long int N, double (*func)(double,double), double L, double T);
-// Recibe una funcion y asigna al azar las velocidades de la distribucion "func" que recive (v,T). 
+// Recibe una funcion y asigna al azar las velocidades de la distribucion "func" que recive (v,T).
 // Ordena las particulas equiespaciadas.
 
 int promvar_v(struct part *molec, long int N, double *prom, double *var);
@@ -33,11 +33,11 @@ int promvar_f(struct part *molec, long int N, double *prom, double *var);
 // Calculan promedio y varianza y lo escriben en prom y var. v y f respectivamente
 // En prom y var escriben los 3 valores promedio. x -> 0 ; y -> 1 ; z -> 2
 
-int eval_f(struct part *molec, long int N, double L, double *tabla);
+int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoints);
 //Interpola las fuerzas de la tabla y llena las propiedades del struct con eso.
 
-int make_table(double (*func)(double), int nptos, double L, double *tabla);
-// Realiza una discretizacion de "func" en nptos con paso dr=L/nptos y los escribe 
+int make_table(double(*funcion)(double), int numpoints, double L, double *tabla);
+// Realiza una discretizacion de "func" en nptos con paso dr=L/nptos y los escribe
 // en tabla
 
 double funcion_LJ(double r);//Devuelve el potencial para un cierto valor de r. Realiza el corte en el potencial a partir de rc.
@@ -63,19 +63,3 @@ double ord_verlet(struct part *molec, long int N, double L);
  * Re-escaleo de velocidades
  * y muchas mas
  */
-
-
-
-
-
-
-
-
- 
-
-
-
-
-
-
-
