@@ -31,7 +31,7 @@ double funcion_LJ(double r)
 	*	Esta función devuelve el potencial de LJ a una distancia r entre particulas.
 	*	Además utiliza una interpolacion con spline S(r)=ar^3+br^2+cr+d de orden 3
         *       entre los puntos rc=2.5sigma y rcorte=3sigma pidiendo:   
-        *       S(rc)=V(rc), S(rcorte)=0, S'(rc)=V'(rc) y S'(rcorte)=0.
+        *       S(rc)=LJ(rc), S(rcorte)=0, S'(rc)=LJ'(rc) y S'(rcorte)=0.
         *       Esto permite que al hacer el corte del potencial la fuerza sea continua.
         *       El potencial V entonces queda como una funcion partida:
         *                 LJ(r)   si         r<rc
@@ -73,7 +73,7 @@ double funcion_fuerza(double r)
 	*	Además utiliza la derivada del spline S'(r)=ar^2+br+c (Ver "funcion_LJ")
         *       Esto permite que al hacer el corte del potencial la fuerza sea continua.
         *       La fuerza f entonces queda como una funcion partida:
-        *                  -1*V'(r)   si         r<rc
+        *                  -1*LJ'(r)   si         r<rc
         *        f(r) =    -1*S'(r)   si     rc <r<rcorte
         *                   0         si  rcorte<r 
 	*/ 
