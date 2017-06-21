@@ -8,7 +8,7 @@
 #include <math.h>
 #include "master.h"
 
-int make_tabla(double(*funcion)(double), int numpoints, double L, double *tabla)
+int make_table(double(*funcion)(double), int numpoints, double L, double *tabla)
        /*
 	*	Esta función recibe una funcion y completa el array *tabla el cual es
 	*       de tamaño 2*numpoints. Además calcula la separación dr de los valores de
