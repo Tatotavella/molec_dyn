@@ -8,37 +8,101 @@
 #include <math.h>
 #include "master.h"
 
-int make_table(double(*funcion)(double), int numpoints, double L, double *tabla)
+int make_tabla(double(*funcion)(double), int numpoints, double L, double *tabla)
+       /*
+	*	Esta función recibe una funcion y completa el array *tabla el cual es
+	*       de tamaño 2*numpoints. Además calcula la separación dr de los valores de
+        *       la tabla mediante L y numpoints.
+	*       El array *tabla se llenara de la siguiente manera:
+        *         r_o, r_1,...,r_(numpoints-1), f(r_o), f(r_1), ...,f(r_numpoints-1) 
+	*/ 
  {
   double dr=L/numpoints;
   for (int i=0;i<numpoints;i++)
     {
-      tabla[i]=dr*(i+1);                     //fila 1: x ---->dr*(i+1)para que no evalue en 0
+      tabla[i]=dr*(i+1);                     //fila 1: x 
       tabla[i+numpoints]=funcion(tabla[i]);  //fila 2: funcion(x)
     }
   return 0;
  }
 
 double funcion_LJ(double r)
+       /*
+	*	Esta función devuelve el potencial de LJ a una distancia r entre particulas.
+	*	Además utiliza una interpolacion con spline S(r)=ar^3+br^2+cr+d de orden 3
+        *       entre los puntos rc=2.5sigma y rcorte=3sigma pidiendo:   
+        *       S(rc)=V(rc), S(rcorte)=0, S'(rc)=V'(rc) y S'(rcorte)=0.
+        *       Esto permite que al hacer el corte del potencial la fuerza sea continua.
+        *       El potencial V entonces queda como una funcion partida:
+        *                 LJ(r)   si         r<rc
+        *        V(r) =    S(r)   si     rc <r<rcorte
+        *                   0     si  rcorte<r 
+	*/ 
  {
   double V;
-  double rc=2.4999;                              //de esta forma no tira error en fabs(x-rc) si llega a rc=2.5 (ver si se puede mejorar el escalon)
-  int escalon=0.5*(1-(int)((r-rc)/fabs(r-rc)));  //escalon 1---0 centrada en x=rc
-  V=(4*(pow(1/r,12)-pow(1/r,6))-4*(pow(1/rc,12)-pow(1/rc,6)))*(escalon); //potencial por la funcion escalon
+  double sigma=1;
+  double rc=2.5*sigma;
+  double rcorte=3*sigma;
+  //Coeficientes spline orden 3: ar^3+br^2+cr+d
+  double a=-0.105072;
+  double b=0.827847;
+  double c=-2.130131;
+  double d=1.776719;
+
+  if (r<rc)
+    {
+     V=4*(pow(1/r,12)-pow(1/r,6));
+    }
+  else if (r<rcorte)
+    {
+     V=a*(r*r*r)+b*(r*r)+(c*r)+d;
+    }
+  else
+    {
+     V=0;
+    }
+  
+ //posible forma de evitar ifs: int escalon=0.5*(1-(int)((x-rc)/fabs(x-rc)));  //escalon 1---0 centrada en x=rc 
 
   return V;
  }
 
 double funcion_fuerza(double r)
+       /*
+	*	Esta función devuelve la fuerza a una distancia r entre particulas.
+	*	Además utiliza la derivada del spline S'(r)=ar^2+br+c (Ver "funcion_LJ")
+        *       Esto permite que al hacer el corte del potencial la fuerza sea continua.
+        *       La fuerza f entonces queda como una funcion partida:
+        *                  -1*V'(r)   si         r<rc
+        *        f(r) =    -1*S'(r)   si     rc <r<rcorte
+        *                   0         si  rcorte<r 
+	*/ 
  {
   double f;
-  double rc=2.4999;                       //de esta forma no tira error en fabs(x-rc) si llega a rc=2.5 (ver si se puede mejorar el escalon)
-  int escalon=0.5*(1-(int)((r-rc)/fabs(r-rc)));  //escalon 1---0 centrada en x=rc
+  double sigma=1;
+  double rc=2.5*sigma;
+  double rcorte=3*sigma;
+  //coeficientes de S'(r) derivada del spline hecho en "funcion_LJ":
+  double a=-0.105072;
+  double b=0.827847;
+  double c=-2.130131;
 
-  f=(4*(12*pow(1/r,13)-6*pow(1/r,7)))*(escalon); //derivada del potencial por la funcion escalon
-
+  if (r<rc)
+    {
+     f=(4*(12*pow(1/r,13)-6*pow(1/r,7)));
+    }
+  else if (r<rcorte)
+    {
+     f=-(3*a*(r*r)+2*b*(r)+(c));
+    }
+  else
+    {
+     f=0;
+    }
+ 
   return f;
  }
+
 
 int init_rv(struct part *molec, long int N, double (*func)(double,double), double L, double T)
 {
