@@ -19,8 +19,8 @@ struct part
 	double fx; //Fuerzas
 	double fy;
 	double fz;
-	double e_p; // Energia potencial
-	double e_c; // Energia cinetica
+	double ep; // Energia potencial
+	double ec; // Energia cinetica
 	double m; //Masa
 };
 
@@ -56,6 +56,10 @@ int new_vel(struct part *past, struct part *future, long int N, double L, double
 
 double ord_verlet(struct part *molec, long int N, double L);
 //Devuelve el parametro de ordenamiento geometrico de Verlet
+
+int rescale_vel(struct part *molec, long int N, double T_old, double T_new);
+//Escribe velocidades re-escaleadas en el srtuct
+
 
 /* Faltan:
  * Funcion H de Boltzmann

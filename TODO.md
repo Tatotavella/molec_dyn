@@ -1,7 +1,16 @@
 # TODO list
 - [ ] Hacer README
 - [ ] Documentación API
-- [ ] init_rv y distribucion de Boltzmann FEDERICO
-- [ ] promvar_v, promvar_f y ord_verlet JOAN
+- [ ] Pasar documentacion a los .h
+- [ ] Funcion H de Boltzmann
+- [ ] Re-escaleo de velocidades JOAN
+- [ ] Distribucion Radial JOAN
+- [ ] Hacer un main comodo para largar corridas FEDERICO
+- [ ] Medicion de la energia. Energia cinetica en new_vel y potencial en eval_f FRANCO
+- [ ] Modificar make_table para que tenga la data del potencial LUCAS
+- [ ] ¿CONSERVA LA ENERGIA? -> PARECE QUE SI
+- [ ] Muestreo
+- [X] init_rv y distribucion de Boltzmann FEDERICO
+- [X] promvar_v, promvar_f y ord_verlet JOAN
 - [X] make_table y Lennard Jones V y F LUCAS
 - [X] new_pos, new_vel y eval_f FRANCO

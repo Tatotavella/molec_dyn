@@ -57,16 +57,27 @@ int main()
         promvar_f(past, N, frz_avg[i], frz_var[i]);
 
         printf("done with %d / %d\n", i, Niter);
-        ///*
+        /*
+
         fprintf(file, "%d,%f,%f,%f,%f,%f,%f,%f\n", i, lambda[i],
                 vel_avg[i][0], vel_avg[i][1], vel_avg[i][2],
                 frz_avg[i][0], frz_avg[i][1], frz_avg[i][2]);
-
+        */
         /*
         fprintf(file, "%d,%f,%f,%f,%f,%f,%f,%f\n", i, lambda[i],
                 past[particul].vx, past[particul].vy, past[particul].vz,
                 past[particul].fx, past[particul].fy, past[particul].fz);
         */
+        //Energia
+        double ecin = 0;
+        double epot = 0;
+        for (int i = 0; i < N; i++) {
+            ecin += past[i].ec;
+            epot += past[i].ep;
+        }
+        fprintf(file, "%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", i, lambda[i],
+        past[particul].vx, past[particul].vy, past[particul].vz,
+        past[particul].fx, past[particul].fy, past[particul].fz,ecin,epot/2);
     }
 
     /*

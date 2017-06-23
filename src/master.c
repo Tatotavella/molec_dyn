@@ -298,6 +298,7 @@ int new_vel(struct part *past, struct part *future, long int N, double L, double
   */
  long int i;
  double vx_new, vy_new, vz_new;
+ double ecin;
  for(i=0; i<N; i++)
  {
    //Calculo de las nuevas velocidades
@@ -309,6 +310,11 @@ int new_vel(struct part *past, struct part *future, long int N, double L, double
    future[i].vx = vx_new;
    future[i].vy = vy_new;
    future[i].vz = vz_new;
+
+   //Energia cinetica
+   ecin = (vx_new*vx_new + vy_new*vy_new + vz_new*vz_new)/(2*future[i].m);
+   future[i].ec = ecin;
+   
  }
  return 0;
 }
@@ -334,12 +340,13 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
  double dr = L / numpoints;
  int index;
  double r_part;
- //Fuerzas a 0
+ //Fuerzas a 0. Potencial a 0
  for (i = 0; i < N; i++)
  {
      molec[i].fx = 0;
      molec[i].fy = 0;
      molec[i].fz = 0;
+     molec[i].ep = 0;
  }
  //Recorro todos los pares de particulas
  for(i=0; i<N; i++)
@@ -359,8 +366,6 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
 
     r_part = sqrt(dx*dx + dy*dy + dz*dz);
 
-
-
     //Indice en la tabla para esa distancia
     index = ceil(r_part / dr) - 1;
     //Modulo de la fuerza para esa distancia. Ver funcion make_table
@@ -378,6 +383,10 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
     molec[j].fx += -1 * pre_force * x_dir;
     molec[j].fy += -1 * pre_force * y_dir;
     molec[j].fz += -1 * pre_force * z_dir;
+
+    //Potencial
+    molec[i].ep += funcion_LJ(r_part);
+    molec[j].ep += funcion_LJ(r_part);
     /*
     if(r_part<3)
     {
