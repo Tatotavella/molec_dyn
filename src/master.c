@@ -14,13 +14,13 @@ int make_table(double(*funcion)(double), int numpoints, double L, double *tabla)
 	*       de tamaño 2*numpoints. Además calcula la separación dr de los valores de
         *       la tabla mediante L y numpoints.
 	*       El array *tabla se llenara de la siguiente manera:
-        *         r_o, r_1,...,r_(numpoints-1), f(r_o), f(r_1), ...,f(r_numpoints-1) 
-	*/ 
+        *         r_o, r_1,...,r_(numpoints-1), f(r_o), f(r_1), ...,f(r_numpoints-1)
+	*/
  {
   double dr=L/numpoints;
   for (int i=0;i<numpoints;i++)
     {
-      tabla[i]=dr*(i+1);                     //fila 1: x 
+      tabla[i]=dr*(i+1);                     //fila 1: x
       tabla[i+numpoints]=funcion(tabla[i]);  //fila 2: funcion(x)
     }
   return 0;
@@ -30,14 +30,14 @@ double funcion_LJ(double r)
        /*
 	*	Esta función devuelve el potencial de LJ a una distancia r entre particulas.
 	*	Además utiliza una interpolacion con spline S(r)=ar^3+br^2+cr+d de orden 3
-        *       entre los puntos rc=2.5sigma y rcorte=3sigma pidiendo:   
+        *       entre los puntos rc=2.5sigma y rcorte=3sigma pidiendo:
         *       S(rc)=LJ(rc), S(rcorte)=0, S'(rc)=LJ'(rc) y S'(rcorte)=0.
         *       Esto permite que al hacer el corte del potencial la fuerza sea continua.
         *       El potencial V entonces queda como una funcion partida:
         *                 LJ(r)   si         r<rc
         *        V(r) =    S(r)   si     rc <r<rcorte
-        *                   0     si  rcorte<r 
-	*/ 
+        *                   0     si  rcorte<r
+	*/
  {
   double V;
   double sigma=1;
@@ -61,8 +61,8 @@ double funcion_LJ(double r)
     {
      V=0;
     }
-  
- //posible forma de evitar ifs: int escalon=0.5*(1-(int)((x-rc)/fabs(x-rc)));  //escalon 1---0 centrada en x=rc 
+
+ //posible forma de evitar ifs: int escalon=0.5*(1-(int)((x-rc)/fabs(x-rc)));  //escalon 1---0 centrada en x=rc
 
   return V;
  }
@@ -75,8 +75,8 @@ double funcion_fuerza(double r)
         *       La fuerza f entonces queda como una funcion partida:
         *                  -1*LJ'(r)   si         r<rc
         *        f(r) =    -1*S'(r)   si     rc <r<rcorte
-        *                   0         si  rcorte<r 
-	*/ 
+        *                   0         si  rcorte<r
+	*/
  {
   double f;
   double sigma=1;
@@ -99,7 +99,7 @@ double funcion_fuerza(double r)
     {
      f=0;
     }
- 
+
   return f;
  }
 
@@ -319,8 +319,8 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
   * @brief discretizacion de las fuerzas provistas en @p *tabla.
   * @brief Se utilizan condiciones periodicas de contorno.
   *
-  * Se asume que las fuerzas dentro del struct @p *molec se encuentran
-  * inicializadas en 0. La fuerza se asigna en la direccion que une a
+  * Se setean fuerzas dentro del struct @p *molec a 0.
+  * La fuerza se asigna en la direccion que une a
   * las particulas.
   *
   * @date 19 Jun 2017
@@ -334,7 +334,13 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
  double dr = L / numpoints;
  int index;
  double r_part;
-
+ //Fuerzas a 0
+ for (i = 0; i < N; i++)
+ {
+     molec[i].fx = 0;
+     molec[i].fy = 0;
+     molec[i].fz = 0;
+ }
  //Recorro todos los pares de particulas
  for(i=0; i<N; i++)
  {
@@ -353,14 +359,16 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
 
     r_part = sqrt(dx*dx + dy*dy + dz*dz);
 
+
+
     //Indice en la tabla para esa distancia
     index = ceil(r_part / dr) - 1;
     //Modulo de la fuerza para esa distancia. Ver funcion make_table
     pre_force = tabla[index + numpoints];
     //Direccion de la fuerza
-    x_dir = -1 * dx/r_part;
-    y_dir = -1 * dy/r_part;
-    z_dir = -1 * dz/r_part;
+    x_dir = 1 * dx/r_part;
+    y_dir = 1 * dy/r_part;
+    z_dir = 1 * dz/r_part;
 
     //Asignacion de la fuerza para la particula i y j
     molec[i].fx += pre_force * x_dir;
@@ -370,6 +378,20 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
     molec[j].fx += -1 * pre_force * x_dir;
     molec[j].fy += -1 * pre_force * y_dir;
     molec[j].fz += -1 * pre_force * z_dir;
+    /*
+    if(r_part<3)
+    {
+      printf("Interaccion part: %ld con %ld\n",i,j);
+      printf("Distancia: %f, fuerza %f\n",r_part,pre_force);
+      printf("Velocidades part: %ld vx: %f, vy: %f, vz: %f\n",i,
+              molec[i].vx,molec[i].vy,molec[i].vz);
+      printf("Velocidades part: %ld vx: %f, vy: %f, vz: %f\n",i,
+              molec[i].vx,molec[i].vy,molec[i].vz);
+      printf("Velocidades part: %ld vx: %f, vy: %f, vz: %f\n",j,
+                      molec[j].vx,molec[j].vy,molec[j].vz);
+
+    }
+    */
    }
  }
  return 0;
