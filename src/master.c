@@ -301,9 +301,9 @@ int new_vel(struct part *past, struct part *future, long int N, double L, double
  for(i=0; i<N; i++)
  {
    //Calculo de las nuevas velocidades
-   vx_new = past[i].vx + (past[i].vx + future[i].vx) * (h/(2* past[i].m));
-   vy_new = past[i].vy + (past[i].vy + future[i].vy) * (h/(2* past[i].m));
-   vz_new = past[i].vz + (past[i].vz + future[i].vz) * (h/(2* past[i].m));
+   vx_new = past[i].vx + (past[i].fx + future[i].fx) * (h/(2* past[i].m));
+   vy_new = past[i].vy + (past[i].fy + future[i].fy) * (h/(2* past[i].m));
+   vz_new = past[i].vz + (past[i].fz + future[i].fz) * (h/(2* past[i].m));
 
    //Asignacion
    future[i].vx = vx_new;
