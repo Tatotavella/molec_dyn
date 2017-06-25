@@ -457,3 +457,22 @@ int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]){
 	return 0;
 
 }
+
+
+int rescale(struct part *molec, long int N, double T_old, double T_new){
+
+	/*
+	*	Esta función realiza el reescaleo de velocidades.
+	*/
+
+	int i;
+	for (i=0; i<N; i++)
+	{
+		molec[i].vx = sqrt(T_new/T_old)*molec[i].vx;
+		molec[i].vy = sqrt(T_new/T_old)*molec[i].vy;
+		molec[i].vz = sqrt(T_new/T_old)*molec[i].vz;
+	}
+
+	return 0;
+
+}
