@@ -57,9 +57,11 @@ int new_vel(struct part *past, struct part *future, long int N, double L, double
 double ord_verlet(struct part *molec, long int N, double L);
 //Devuelve el parametro de ordenamiento geometrico de Verlet
 
+int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]);
+// Genera la distribución radial.
+
 /* Faltan:
  * Funcion H de Boltzmann
- * Distribucion Radial
  * Re-escaleo de velocidades
  * y muchas mas
  */
