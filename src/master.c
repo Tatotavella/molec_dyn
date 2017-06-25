@@ -396,3 +396,64 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
  }
  return 0;
 }
+
+
+int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]){
+
+	/*
+	*	Esta función genera la distribucion radial discretizando L en #bins.
+	*	El resultado se lo suma al vector hist (sin normalizar)
+	*	Elemplo:
+	*   		int bins = 100;
+	*		int hist[bins];
+	*
+	*		//Se inicializa la primera vez con todo en 0.
+	*		for (i=0; i<bins; i++){ 
+	*			hist[i] = 0;
+	*		}
+	*
+	*		//n_hist representa es el 'eje x' del histograma.
+	*		float n_hist[bins];
+	*		for (i=0; i<bins; i++){
+	*			n_hist[i] = i*L/bins;
+	*		}
+	*		dist_radial(molec,N,L,bins,hist);		
+	*		for (i=0; i<bins; i++){
+	*			printf("%f    %i\n",n_hist[i], hist[i]);
+	*		}
+	*/
+
+	int i,j, m=0;
+	double x1,x2,y1,y2,z1,z2,dx,dy,dz;
+	long int n = 0.5*(N-1)*N;	
+	float *dist = malloc(n*sizeof(float));
+	
+	// Genero el vector de distancias.
+	for (i=0; i<N; i++)
+	{
+		for (j=0; j<i; j++)
+		{
+			x1 = molec[i].x, y1 = molec[i].y, z1 = molec[i].z; 
+			x2 = molec[j].x, y2 = molec[j].y, z2 = molec[j].z;
+			dx = x2-x1, dy = y2-y1, dz = z2-z1;
+			dx = dx - L*(int)(2*dx/L);
+			dy = dy - L*(int)(2*dy/L);
+			dz = dz - L*(int)(2*dz/L);
+			*(dist+m) = sqrt(dx*dx+dy*dy+dz*dz);
+			m = m+1;
+		}
+	}
+
+	// Genero el histogrma.
+	int H;
+	for (i=0; i<n; i++)
+	{
+		H = (int)(bins*(*(dist+i))/L);
+		hist[H] = hist[H]+1;
+	}
+	
+	free(dist);
+
+	return 0;
+
+}
