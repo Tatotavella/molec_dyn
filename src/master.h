@@ -60,6 +60,9 @@ double ord_verlet(struct part *molec, long int N, double L);
 int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]);
 // Genera la distribución radial.
 
+int rescale(struct part *molec, long int N, double T_old, double T_new);
+// Genera el reescaleo de velocidades.
+
 /* Faltan:
  * Funcion H de Boltzmann
  * Re-escaleo de velocidades
