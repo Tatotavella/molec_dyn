@@ -6,7 +6,7 @@
 - [X] Re-escaleo de velocidades JOAN
 - [X] Distribucion Radial JOAN
 - [ ] Hacer un main comodo para largar corridas FEDERICO
-- [ ] Medicion de la energia. Energia cinetica en new_vel y potencial en eval_f FRANCO
+- [X] Medicion de la energia. Energia cinetica en new_vel y potencial en eval_f FRANCO
 - [ ] Modificar make_table para que tenga la data del potencial LUCAS
 - [ ] ¿CONSERVA LA ENERGIA? -> PARECE QUE SI
 - [ ] Muestreo
