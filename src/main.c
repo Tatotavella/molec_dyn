@@ -28,7 +28,7 @@ int main(int argc, char **argv)
     }
     init_rv(past, N, &maxwell_boltzmann, L, T);
 
-    double *VF = malloc(2*Nr * sizeof(*VF));
+    double *VF = malloc(3*Nr * sizeof(*VF));
     make_table(&funcion_LJ, &funcion_fuerza, Nr, L, VF);
     eval_f(past, N, L, VF, Nr);
 
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
     struct part *tmp = past;
     for (int i = 1; i < Niter+1; i++) {
         new_pos(past, future, N, L, h);
-        eval_f(future, N, L, F, Nr);
+        eval_f(future, N, L, VF, Nr);
         new_vel(past, future, N, L, h);
         tmp = past;
         past = future;
@@ -87,8 +87,7 @@ int main(int argc, char **argv)
 
     free(past);
     free(future);
-    free(F);
-    free(V);
+    free(VF);
     free(lambda);
     free(vel_avg);
     free(vel_var);
