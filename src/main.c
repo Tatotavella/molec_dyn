@@ -1,17 +1,22 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "master.h"
 #include "distribuciones.h"
 
-int main()
+int parse_options(char ** argv, int argc, int *n, double *L, double *dr,
+                  double *h, double *T, int *niter, char **outdir);
+
+int main(int argc, char **argv)
 {
-    long int n_p = 5;
-    long int N = n_p*n_p*n_p;
-    double T = 5;
-    double L = 50;
-    int Nr = L/0.001; //Con rcut asi hay puntos donde importa
-    int Niter = 100000;
-    double h = 0.01;
+    int n, N, Niter, Nr;
+    double L, dr, h, T;
+    char *outdir;
+
+    int ret = parse_options(argv, argc, &n, &L, &dr, &h, &T, &Niter, &outdir);
+    if (ret) return 1;
+    N = n*n*n;
+    Nr = L/dr;
 
     int particul = 0;
 
@@ -35,6 +40,8 @@ int main()
     double **frz_var = malloc((Niter+1) * sizeof(*frz_var));
 
     printf("running thermalization ...\n");
+    char *filename = malloc((strlen(outdir) + 20) * sizeof(*filename));
+    sprintf(filename, "%s/out.csv", outdir);
     FILE *file = fopen("out.csv", "w");
     double *lambda = malloc((Niter+1) * sizeof(*lambda));
     lambda[0] = ord_verlet(past, N, L);
@@ -78,6 +85,7 @@ int main()
     }
     */
     fclose(file);
+    free(filename);
 
     free(past);
     free(future);
@@ -91,3 +99,92 @@ int main()
 
     return 0;
 }
+
+int parse_options(char ** argv, int argc, int *n, double *L, double *dr,
+                  double *h, double *T, int *niter, char **outdir)
+{
+    const char *usage = "usage: app [-n nparticles] [-L boxsize] [-dr spacing] [-h timestep] [-T temperature] [-niter niter] [-o outdir]\n"
+                        "  -n nparticles: linear number of particles (total particles = n*n*n)\n"
+                        "  -L boxsize: size of simulation box\n"
+                        "  -dr spacing: spacing of the discretization of the force and potential\n"
+                        "  -h timestep: discrete timestep of numerical integration\n"
+                        "  -T temperature: initial temperature of the system\n"
+                        "  -niter niter: number of iterations\n"
+                        "  -o outdir: output directory where generated files will be stored\n";
+    int nsat, Lsat, drsat, hsat, Tsat, nitersat, osat = 0;
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-n") == 0) {
+            if (argc <= i+1) {
+                printf("failed option parsing.\n");
+                printf("%s", usage);
+                return 1;
+            }
+            *n = atoi(argv[i+1]);
+            i++;
+            nsat = 1;
+        } else if (strcmp(argv[i], "-L") == 0) {
+            if (argc <= i+1) {
+                printf("failed option parsing.\n");
+                printf("%s", usage);
+                return 1;
+            }
+            *L = atof(argv[i+1]);
+            i++;
+            Lsat = 1;
+        } else if (strcmp(argv[i], "-dr") == 0) {
+            if (argc <= i+1) {
+                printf("failed option parsing.\n");
+                printf("%s", usage);
+                return 1;
+            }
+            *dr = atof(argv[i+1]);
+            i++;
+            drsat = 1;
+        } else if (strcmp(argv[i], "-h") == 0) {
+            if (argc <= i+1) {
+                printf("failed option parsing.\n");
+                printf("%s", usage);
+                return 1;
+            }
+            *h = atof(argv[i+1]);
+            i++;
+            hsat = 1;
+        } else if (strcmp(argv[i], "-T") == 0) {
+            if (argc <= i+1) {
+                printf("failed option parsing.\n");
+                printf("%s", usage);
+                return 1;
+            }
+            *T = atof(argv[i+1]);
+            i++;
+            Tsat = 1;
+        } else if (strcmp(argv[i], "-niter") == 0) {
+            if (argc <= i+1) {
+                printf("failed option parsing.\n");
+                printf("%s", usage);
+                return 1;
+            }
+            *niter = atoi(argv[i+1]);
+            i++;
+            nitersat = 1;
+        } else if (strcmp(argv[i], "-o") == 0) {
+            if (argc <= i+1) {
+                printf("failed option parsing.\n");
+                printf("%s", usage);
+                return 1;
+            }
+            *outdir = argv[i+1];
+            i++;
+            osat = 1;
+        }
+    }
+
+    if (!(nsat && Lsat && drsat && hsat && Tsat && nitersat && osat)) {
+        printf("missing required arguments.\n");
+        printf("%s", usage);
+        return 1;
+    }
+
+    return 0;
+}
+
