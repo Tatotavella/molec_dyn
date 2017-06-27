@@ -15,15 +15,15 @@ int make_table(double(*funcion_LJ)(double), double(*funcion_fuerza)(double), int
         *       Además calcula la separación dr de los valores de
         *       la tabla mediante L y numpoints.
 	*       El array *tabla se llenara de la siguiente manera:
-        *         r_o, r_1,...,r_(numpoints-1), V(r_o), V(r_1), ...,V(r_numpoints-1), f(r_o), f(r_1), ...,f(r_numpoints-1) 
+        *         r_o, r_1,...,r_(numpoints-1), f(r_o), f(r_1), ...,f(r_numpoints-1), V(r_o), V(r_1), ...,V(r_numpoints-1) 
 	*/ 
  {
   double dr=L/numpoints;
   for (int i=0;i<numpoints;i++)
     {
-      tabla[i]=dr*(i+1);                            //fila 1: x                    r
-      tabla[i+numpoints]=funcion_LJ(tabla[i]);      //fila 2: funcion_LJ(x)     potencial
-      tabla[i+2*numpoints]=funcion_fuerza(tabla[i]);//fila 3: funcion_fuerza(x) fuerza                                    
+      tabla[i]=dr*(i+1);                                //fila 1: x                           r
+      tabla[i+numpoints]=funcion_fuerza(tabla[i]);      //fila 2: funcion_potencial(x)     potencial
+      tabla[i+2*numpoints]=funcion_LJ(tabla[i]);        //fila 3: funcion_LJ(x)             fuerza                                    
     }
   return 0;
  } 
