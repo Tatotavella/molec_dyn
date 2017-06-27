@@ -96,6 +96,22 @@ int main(int argc, char **argv)
     fclose(file);
     free(filename);
 
+    FILE *filemolec = fopen("molecevol.xyz", "w");
+    for (int i = 0; i < 2000; i++) {
+        new_pos(past, future, N, L, h);
+        eval_f(future, N, L, VF, Nr);
+        new_vel(past, future, N, L, h);
+        tmp = past;
+        past = future;
+        future = tmp;
+
+        fprintf(filemolec, "%d\nmoleculas\n", N);
+        for (int j = 0; j < N; j++) {
+            fprintf(filemolec, "%d %f %f %f\n", j+1, past[j].x, past[j].y, past[j].z);
+        }
+    }
+    fclose(filemolec);
+
     free(past);
     free(future);
     free(VF);
