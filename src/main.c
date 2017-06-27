@@ -28,11 +28,9 @@ int main(int argc, char **argv)
     }
     init_rv(past, N, &maxwell_boltzmann, L, T);
 
-    double *F = malloc(2*Nr * sizeof(*F));
-    double *V = malloc(2*Nr * sizeof(*V));
-    make_table(&funcion_fuerza, Nr, L, F);
-    make_table(&funcion_LJ, Nr, L, V);
-    eval_f(past, N, L, F, Nr);
+    double *VF = malloc(2*Nr * sizeof(*VF));
+    make_table(&funcion_LJ, &funcion_fuerza, Nr, L, VF);
+    eval_f(past, N, L, VF, Nr);
 
     double **vel_avg = malloc((Niter+1) * sizeof(*vel_avg));
     double **vel_var = malloc((Niter+1) * sizeof(*vel_var));
