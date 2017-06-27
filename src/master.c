@@ -8,7 +8,7 @@
 #include <math.h>
 #include "master.h"
 
-int make_tabla(double(*funcion_LJ)(double), double(*funcion_fuerza)(double), int numpoints, double L, double *tabla)
+int make_table(double(*funcion_LJ)(double), double(*funcion_fuerza)(double), int numpoints, double L, double *tabla)
        /*
 	*	Esta función recibe dos funciones, el potencial funcion_LJ y la fuerza funcion_fuerza
         *       y completa el array *tabla el cual es de tamaño 3*numpoints.
@@ -366,7 +366,7 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
     //Indice en la tabla para esa distancia
     index = ceil(r_part / dr) - 1;
     //Modulo de la fuerza para esa distancia. Ver funcion make_table
-    pre_force = tabla[index + numpoints];
+    pre_force = tabla[index + 2*numpoints];
     //Direccion de la fuerza
     x_dir = 1 * dx/r_part;
     y_dir = 1 * dy/r_part;
