@@ -36,8 +36,8 @@ int promvar_f(struct part *molec, long int N, double *prom, double *var);
 int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoints);
 //Interpola las fuerzas de la tabla y llena las propiedades del struct con eso.
 
-int make_table(double(*funcion)(double), int numpoints, double L, double *tabla);
-// Realiza una discretizacion de "func" en nptos con paso dr=L/nptos y los escribe
+int make_tabla(double(*funcion_LJ)(double), double(*funcion_fuerza)(double), int numpoints, double L, double *tabla);
+// Realiza una discretizacion de "funcion_LJ" y de "funcion_fuerza" en nptos con paso dr=L/nptos y los escribe
 // en tabla
 
 double funcion_LJ(double r);//Devuelve el potencial para un cierto valor de r. Realiza el corte en el potencial a partir de rc.
