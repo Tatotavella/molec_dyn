@@ -19,8 +19,8 @@ struct part
 	double fx; //Fuerzas
 	double fy;
 	double fz;
-	double e_p; // Energia potencial
-	double e_c; // Energia cinetica
+	double ep; // Energia potencial
+	double ec; // Energia cinetica
 	double m; //Masa
 };
 
@@ -34,7 +34,18 @@ int promvar_f(struct part *molec, long int N, double *prom, double *var);
 // En prom y var escriben los 3 valores promedio. x -> 0 ; y -> 1 ; z -> 2
 
 int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoints);
-//Interpola las fuerzas de la tabla y llena las propiedades del struct con eso.
+/*
+ * @brief Escribe las fuerzas y potenciales en el struct @p *molec utilizando la
+ * @brief discretizacion provista en @p *tabla de fuerza y potencial.
+ * @brief Se utilizan condiciones periodicas de contorno.
+ *
+ * Se setean fuerzas dentro del struct @p *molec a 0.
+ * La fuerza se asigna en la direccion que une a
+ * las particulas.
+ *
+ * @date 19 Jun 2017
+ * @author Franco Tavella
+ */
 
 int make_table(double(*funcion_LJ)(double), double(*funcion_fuerza)(double), int numpoints, double L, double *tabla);
 // Realiza una discretizacion de "funcion_LJ" y de "funcion_fuerza" en nptos con paso dr=L/nptos y los escribe
@@ -46,12 +57,36 @@ double funcion_fuerza(double r);//Devuelve la fuerza para un cierto valor de r. 
 
 
 int new_pos(struct part *past, struct part *future, long int N, double L, double h);
-//Escribe las nuevas posiciones en "future" basandose en "past" y taylor a segundo
-//orden en la posicion
+/*
+ * @brief Escribe posiciones futuras en el @p *future a partir de aquellas del
+ * @brief instante  @p h anterior @p *past. Aplica condiciones periodicas de
+ * @brief contorno si la nueva posicion excede el tamaño @p L de la caja
+ *
+ * Para actualizar las posiciones se utiliza un desarrollo de Taylor a
+ * segundo orden en el paso temporal @p h y las posiciones, velocidades
+ * y fuerzas evaluadas en el instante pasado, @p *past.
+ * Esta funcion se utiliza en una parte del algoritmo de Verlet en velocidades.
+ *
+ * @date 19 Jun 2017
+ * @author Franco Tavella
+ */
 
 int new_vel(struct part *past, struct part *future, long int N, double L, double h);
-//Escribe las nuevas velocidades en "future" basandose en "past" y taylor a primer
-//orden en la velocidad con promedio de fuerzas.
+/*
+ * @brief Escribe velocidades futuras en el @p *future a partir de aquellas del
+ * @brief instante  @p h anterior @p *past. Se utiliza la actualizacion
+ * @brief correspondiente al algoritmo de Verlet en velocidades.
+ *
+ * Para actualizar las posiciones se utiliza un desarrollo de Taylor a
+ * primer orden en medio paso temporal @p h y en un paso entero. De
+ * esta manera la velocidad en un instante posterior se puede hallar
+ * utilizando un promediado de las fuerzas en el instante pasado
+ * y futuro. Antes de utilizar esta funcion se deben actualizar las
+ * fuerzas en el struc @p *future.
+ *
+ * @date 19 Jun 2017
+ * @author Franco Tavella
+ */
 
 
 double ord_verlet(struct part *molec, long int N, double L);

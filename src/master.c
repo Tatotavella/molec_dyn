@@ -251,19 +251,6 @@ double ord_verlet(struct part *molec, long int N, double L){
 }
 
 int new_pos(struct part *past, struct part *future, long int N, double L, double h){
- /*
-  * @brief Escribe posiciones futuras en el @p *future a partir de aquellas del
-  * @brief instante  @p h anterior @p *past. Aplica condiciones periodicas de
-  * @brief contorno si la nueva posicion excede el tamaño @p L de la caja
-  *
-  * Para actualizar las posiciones se utiliza un desarrollo de Taylor a
-  * segundo orden en el paso temporal @p h y las posiciones, velocidades
-  * y fuerzas evaluadas en el instante pasado, @p *past.
-  * Esta funcion se utiliza en una parte del algoritmo de Verlet en velocidades.
-  *
-  * @date 19 Jun 2017
-  * @author Franco Tavella
-  */
  long int i;
  double x_new, y_new, z_new;
  for(i=0; i<N; i++)
@@ -283,23 +270,9 @@ int new_pos(struct part *past, struct part *future, long int N, double L, double
 
 
 int new_vel(struct part *past, struct part *future, long int N, double L, double h){
- /*
-  * @brief Escribe velocidades futuras en el @p *future a partir de aquellas del
-  * @brief instante  @p h anterior @p *past. Se utiliza la actualizacion
-  * @brief correspondiente al algoritmo de Verlet en velocidades.
-  *
-  * Para actualizar las posiciones se utiliza un desarrollo de Taylor a
-  * primer orden en medio paso temporal @p h y en un paso entero. De
-  * esta manera la velocidad en un instante posterior se puede hallar
-  * utilizando un promediado de las fuerzas en el instante pasado
-  * y futuro. Antes de utilizar esta funcion se deben actualizar las
-  * fuerzas en el struc @p *future.
-  *
-  * @date 19 Jun 2017
-  * @author Franco Tavella
-  */
  long int i;
  double vx_new, vy_new, vz_new;
+ double ecin;
  for(i=0; i<N; i++)
  {
    //Calculo de las nuevas velocidades
@@ -311,37 +284,31 @@ int new_vel(struct part *past, struct part *future, long int N, double L, double
    future[i].vx = vx_new;
    future[i].vy = vy_new;
    future[i].vz = vz_new;
+
+   //Energia cinetica
+   ecin = (vx_new*vx_new + vy_new*vy_new + vz_new*vz_new)/(2*future[i].m);
+   future[i].ec = ecin;
+
  }
  return 0;
 }
 
 int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoints){
- /*
-  * @brief Escribe las fuerzas en el struct @p *molec utilizando la
-  * @brief discretizacion de las fuerzas provistas en @p *tabla.
-  * @brief Se utilizan condiciones periodicas de contorno.
-  *
-  * Se setean fuerzas dentro del struct @p *molec a 0.
-  * La fuerza se asigna en la direccion que une a
-  * las particulas.
-  *
-  * @date 19 Jun 2017
-  * @author Franco Tavella
-  */
  long int i,j;
- double pre_force;
+ double pre_force,potential;
  double x_dir,y_dir,z_dir;
  double dx,dy,dz;
  double x_box,y_box,z_box;
  double dr = L / numpoints;
  int index;
  double r_part;
- //Fuerzas a 0
+ //Fuerzas a 0. Potencial a 0
  for (i = 0; i < N; i++)
  {
      molec[i].fx = 0;
      molec[i].fy = 0;
      molec[i].fz = 0;
+     molec[i].ep = 0;
  }
  //Recorro todos los pares de particulas
  for(i=0; i<N; i++)
@@ -361,12 +328,16 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
 
     r_part = sqrt(dx*dx + dy*dy + dz*dz);
 
-
-
     //Indice en la tabla para esa distancia
     index = ceil(r_part / dr) - 1;
-    //Modulo de la fuerza para esa distancia. Ver funcion make_table
-    pre_force = tabla[index + 2*numpoints];
+    //Modulo de la fuerza y potencial para esa distancia. Ver funcion make_table
+    pre_force = tabla[index + numpoints];
+    potential = tabla[index + 2*numpoints];
+
+    //Potencial de la tabla
+    molec[i].ep += potential;
+    molec[j].ep += potential;
+
     //Direccion de la fuerza
     x_dir = 1 * dx/r_part;
     y_dir = 1 * dy/r_part;
@@ -380,6 +351,12 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
     molec[j].fx += -1 * pre_force * x_dir;
     molec[j].fy += -1 * pre_force * y_dir;
     molec[j].fz += -1 * pre_force * z_dir;
+
+
+    //Potencial calculado
+    molec[i].ep += funcion_LJ(r_part);
+    molec[j].ep += funcion_LJ(r_part);
+
     /*
     if(r_part<3)
     {
@@ -391,7 +368,6 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
               molec[i].vx,molec[i].vy,molec[i].vz);
       printf("Velocidades part: %ld vx: %f, vy: %f, vz: %f\n",j,
                       molec[j].vx,molec[j].vy,molec[j].vz);
-
     }
     */
    }
