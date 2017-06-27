@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "master.h"
 #include "distribuciones.h"
 
@@ -19,6 +20,8 @@ int main(int argc, char **argv)
     Nr = L/dr;
 
     int particul = 0;
+
+    srand(time(NULL));
 
     struct part *past = malloc(N * sizeof(*past));
     struct part *future = malloc(N * sizeof(*future));
