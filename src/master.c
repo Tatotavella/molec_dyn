@@ -8,23 +8,25 @@
 #include <math.h>
 #include "master.h"
 
-int make_table(double(*funcion)(double), int numpoints, double L, double *tabla)
+int make_tabla(double(*funcion_LJ)(double), double(*funcion_fuerza)(double), int numpoints, double L, double *tabla)
        /*
-	*	Esta función recibe una funcion y completa el array *tabla el cual es
-	*       de tamaño 2*numpoints. Además calcula la separación dr de los valores de
+	*	Esta función recibe dos funciones, el potencial funcion_LJ y la fuerza funcion_fuerza
+        *       y completa el array *tabla el cual es de tamaño 3*numpoints.
+        *       Además calcula la separación dr de los valores de
         *       la tabla mediante L y numpoints.
 	*       El array *tabla se llenara de la siguiente manera:
-        *         r_o, r_1,...,r_(numpoints-1), f(r_o), f(r_1), ...,f(r_numpoints-1)
-	*/
+        *         r_o, r_1,...,r_(numpoints-1), V(r_o), V(r_1), ...,V(r_numpoints-1), f(r_o), f(r_1), ...,f(r_numpoints-1) 
+	*/ 
  {
   double dr=L/numpoints;
   for (int i=0;i<numpoints;i++)
     {
-      tabla[i]=dr*(i+1);                     //fila 1: x
-      tabla[i+numpoints]=funcion(tabla[i]);  //fila 2: funcion(x)
+      tabla[i]=dr*(i+1);                            //fila 1: x                    r
+      tabla[i+numpoints]=funcion_LJ(tabla[i]);      //fila 2: funcion_LJ(x)     potencial
+      tabla[i+2*numpoints]=funcion_fuerza(tabla[i]);//fila 3: funcion_fuerza(x) fuerza                                    
     }
   return 0;
- }
+ } 
 
 double funcion_LJ(double r)
        /*
