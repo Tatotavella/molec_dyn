@@ -389,13 +389,14 @@ int evolution_step(struct part **past, struct part **future, long int N, double 
     return 0;
 }
 
+
 int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]){
 
 	/*
 	*	Esta función genera la distribucion radial discretizando L en #bins.
 	*	El resultado se lo suma al vector hist (sin normalizar)
 	*	Elemplo:
-	*   		int bins = 100;
+	*		int bins = 100;
 	*		int hist[bins];
 	*
 	*		//Se inicializa la primera vez con todo en 0.
@@ -406,7 +407,7 @@ int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]){
 	*		//n_hist representa es el 'eje x' del histograma.
 	*		float n_hist[bins];
 	*		for (i=0; i<bins; i++){
-	*			n_hist[i] = i*L/bins;
+	*			n_hist[i] = i*(2.5*L)/bins; // Ls=2
 	*		}
 	*		dist_radial(molec,N,L,bins,hist);		
 	*		for (i=0; i<bins; i++){
@@ -414,24 +415,32 @@ int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]){
 	*		}
 	*/
 
-	int i,j, m=0;
+	float Ls = 2; // Cuantas copias hago a cada lado.
+	int a,b,c,i,j,m=0;
 	double x1,x2,y1,y2,z1,z2,dx,dy,dz;
-	long int n = 0.5*(N-1)*N;	
+	long int n = ((2*Ls+1)*(2*Ls+1)*(2*Ls+1))*(0.5*(N+1)*N);	
 	float *dist = malloc(n*sizeof(float));
 	
 	// Genero el vector de distancias.
-	for (i=0; i<N; i++)
+
+	for (a=-Ls; a<=Ls; a++)
 	{
-		for (j=0; j<i; j++)
+		for (b=-Ls; b<=Ls; b++)
 		{
-			x1 = molec[i].x, y1 = molec[i].y, z1 = molec[i].z; 
-			x2 = molec[j].x, y2 = molec[j].y, z2 = molec[j].z;
-			dx = x2-x1, dy = y2-y1, dz = z2-z1;
-			dx = dx - L*(int)(2*dx/L);
-			dy = dy - L*(int)(2*dy/L);
-			dz = dz - L*(int)(2*dz/L);
-			*(dist+m) = sqrt(dx*dx+dy*dy+dz*dz);
-			m = m+1;
+			for (c=-Ls; c<=Ls; c++)
+			{	
+				for (i=0; i<N; i++)
+				{
+					for (j=0; j<=i; j++)
+					{
+						x1 = molec[i].x, y1 = molec[i].y, z1 = molec[i].z; 
+						x2 = molec[j].x+a*L, y2 = molec[j].y+b*L, z2 = molec[j].z+c*L;
+						dx = x2-x1, dy = y2-y1, dz = z2-z1;
+						*(dist+m) = sqrt(dx*dx+dy*dy+dz*dz);
+						m = m+1;
+					}
+				}
+			}	
 		}
 	}
 
@@ -439,10 +448,12 @@ int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]){
 	int H;
 	for (i=0; i<n; i++)
 	{
-		H = (int)(bins*(*(dist+i))/L);
-		hist[H] = hist[H]+1;
+		if (*(dist+i)<=(Ls+0.5)*L){
+			H = (int)(bins*(*(dist+i))/((Ls+0.5)*L));
+			hist[H] = hist[H]+1;
+		}
 	}
-	
+
 	free(dist);
 
 	return 0;
