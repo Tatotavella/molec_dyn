@@ -352,11 +352,6 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
     molec[j].fy += -1 * pre_force * y_dir;
     molec[j].fz += -1 * pre_force * z_dir;
 
-
-    //Potencial calculado
-    molec[i].ep += funcion_LJ(r_part);
-    molec[j].ep += funcion_LJ(r_part);
-
     /*
     if(r_part<3)
     {
