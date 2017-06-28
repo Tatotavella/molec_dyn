@@ -108,7 +108,7 @@ double funcion_fuerza(double r)
 
 int init_rv(struct part *molec, long int N, double (*func)(double,double), double L, double T)
 {
-    int n = ceil(cbrt(N));
+    int n = round(cbrt(N));
     double a = L/n;
 
     double vx_avg = 0;
