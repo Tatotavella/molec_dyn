@@ -88,6 +88,21 @@ int new_vel(struct part *past, struct part *future, long int N, double L, double
  * @author Franco Tavella
  */
 
+/*! Realiza un paso temporal de la evolucion del sistema
+
+    @param past puntero al array de particulas en el estado inicial del paso.
+        Al regresar la funcion, contiene el estado nuevo del sistema.
+    @param future puntero al array de particulas que se utilizara para el calculo del
+        neuvo estado. Al regresar la funcion, contiene el estado inicial del
+        sistema.
+    @param N numero de particulas en el sistema.
+    @param VF array con la discretizacion de la fuerza y del potencial. El formato de
+        la tabla esta dado por el output de la funcion @make_table.
+    @param Nr numero de puntos en la discretizacion de la fuerza y potencial.
+    @param L tamano de la caja de simulacion.
+    @param h tamano del paso temporal de la integracion numerica.
+*/
+int evolution_step(struct part **past, struct part **future, long int N, double *VF, int Nr, double L, double h);
 
 double ord_verlet(struct part *molec, long int N, double L);
 //Devuelve el parametro de ordenamiento geometrico de Verlet

@@ -375,6 +375,19 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
  return 0;
 }
 
+int evolution_step(struct part **past, struct part **future, long int N, double *VF, int Nr, double L, double h)
+{
+    struct part *tmp;
+
+    new_pos(*past, *future, N, L, h);
+    eval_f(*future, N, L, VF, Nr);
+    new_vel(*past, *future, N, L, h);
+    tmp = *past;
+    *past = *future;
+    *future = tmp;
+
+    return 0;
+}
 
 int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]){
 

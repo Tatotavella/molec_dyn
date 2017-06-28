@@ -46,14 +46,8 @@ int main(int argc, char **argv)
     FILE *file = fopen("out.csv", "w");
     double *lambda = malloc((Niter+1) * sizeof(*lambda));
     lambda[0] = ord_verlet(past, N, L);
-    struct part *tmp = past;
     for (int i = 1; i < Niter+1; i++) {
-        new_pos(past, future, N, L, h);
-        eval_f(future, N, L, VF, Nr);
-        new_vel(past, future, N, L, h);
-        tmp = past;
-        past = future;
-        future = tmp;
+        evolution_step(&past, &future, N, VF, Nr, L, h);
 
         lambda[i] = ord_verlet(past, N, L);
 
@@ -101,12 +95,7 @@ int main(int argc, char **argv)
 
     FILE *filemolec = fopen("molecevol.xyz", "w");
     for (int i = 0; i < 2000; i++) {
-        new_pos(past, future, N, L, h);
-        eval_f(future, N, L, VF, Nr);
-        new_vel(past, future, N, L, h);
-        tmp = past;
-        past = future;
-        future = tmp;
+        evolution_step(&past, &future, N, VF, Nr, L, h);
 
         fprintf(filemolec, "%d\nmoleculas\n", N);
         for (int j = 0; j < N; j++) {
