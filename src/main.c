@@ -43,7 +43,7 @@ int main(int argc, char **argv)
     printf("running thermalization ...\n");
     char *filename = malloc((strlen(outdir) + 20) * sizeof(*filename));
     sprintf(filename, "%s/out.csv", outdir);
-    FILE *file = fopen("out.csv", "w");
+    FILE *file = fopen(filename, "w");
     double *lambda = malloc((Niter+1) * sizeof(*lambda));
     lambda[0] = ord_verlet(past, N, L);
     for (int i = 1; i < Niter+1; i++) {
