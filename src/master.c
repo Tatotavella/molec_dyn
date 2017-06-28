@@ -286,7 +286,7 @@ int new_vel(struct part *past, struct part *future, long int N, double L, double
    future[i].vz = vz_new;
 
    //Energia cinetica
-   ecin = (vx_new*vx_new + vy_new*vy_new + vz_new*vz_new)/(2*future[i].m);
+   ecin = (vx_new*vx_new + vy_new*vy_new + vz_new*vz_new)*future[i].m/2;
    future[i].ec = ecin;
 
  }
