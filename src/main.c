@@ -71,15 +71,12 @@ int main(int argc, char **argv)
                 past[particul].fx, past[particul].fy, past[particul].fz);
         */
         //Energia
-        double ecin = 0;
-        double epot = 0;
-        for (int i = 0; i < N; i++) {
-            ecin += past[i].ec;
-            epot += past[i].ep;
-        }
+        double e[3];
+        system_energy(past, N, e);
+
         fprintf(file, "%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", i, lambda[i],
         past[particul].vx, past[particul].vy, past[particul].vz,
-        past[particul].fx, past[particul].fy, past[particul].fz,ecin,epot/2);
+        past[particul].fx, past[particul].fy, past[particul].fz, e[1], e[2]);
     }
 
     /*

@@ -384,6 +384,24 @@ int evolution_step(struct part **past, struct part **future, long int N, double 
     return 0;
 }
 
+int system_energy(struct part* molec, long int N, double *e)
+{
+    double K = 0;
+    double V = 0;
+    double E;
+    for (long int i = 0; i < N; i++) {
+        K += molec[i].ec;
+        V += molec[i].ep;
+    }
+    V /= 2;
+    E = K + V;
+
+    e[0] = E;
+    e[1] = K;
+    e[2] = V;
+
+    return 0;
+}
 
 int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]){
 

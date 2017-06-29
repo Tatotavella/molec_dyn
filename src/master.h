@@ -104,6 +104,17 @@ int new_vel(struct part *past, struct part *future, long int N, double L, double
 */
 int evolution_step(struct part **past, struct part **future, long int N, double *VF, int Nr, double L, double h);
 
+/*! Calcula la energia del sistema
+
+    @param molec puntero al array de particulas del sistema.
+    @param N numero de particulas en el sistema.
+    @param e puntero a array donde se guarda el valor de la energia. El array
+        debe tener tamano 3 y al regresar la funcion la entrada 0 contiene la
+        energia total del sistema, la entrada 1 la energia cinetica y la
+        entrada 2 la energia potencial.
+*/
+int system_energy(struct part* molec, long int N, double *e);
+
 double ord_verlet(struct part *molec, long int N, double L);
 //Devuelve el parametro de ordenamiento geometrico de Verlet
 
