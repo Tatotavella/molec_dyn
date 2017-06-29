@@ -127,7 +127,8 @@ int parse_options(char ** argv, int argc, int *n, double *L, double *dr,
                         "  -T temperature: initial temperature of the system\n"
                         "  -niter niter: number of iterations\n"
                         "  -o outdir: output directory where generated files will be stored\n";
-    int nsat, Lsat, drsat, hsat, Tsat, nitersat, osat = 0;
+    int nsat, Lsat, drsat, hsat, Tsat, nitersat, osat;
+    nsat = Lsat = drsat = hsat = Tsat = nitersat = osat = 0;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-n") == 0) {
             if (argc <= i+1) {
