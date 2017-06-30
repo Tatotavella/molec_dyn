@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 
     struct part *past = malloc(N * sizeof(*past));
     struct part *future = malloc(N * sizeof(*future));
-    struct termo_data *data = malloc(Niter * sizeof(*data));
+    struct termo_data *data = malloc((Niter+1) * sizeof(*data));
 
     for (int i = 0; i < N; i++) {
         past[i].m = 1;
