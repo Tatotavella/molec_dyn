@@ -6,7 +6,7 @@ LD = $(CC)
 SOURCE_C = $(wildcard *.c)
 OBJECTS_C = $(patsubst %.c, %_c.o, $(SOURCE_C))
 
-CFLAGS = -std=gnu99 -Wall
+CFLAGS = -std=gnu99 -Wall -O3
 EXECUTABLE = ../bin/prog.e
 
 
