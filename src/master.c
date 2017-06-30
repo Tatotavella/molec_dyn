@@ -403,32 +403,34 @@ int system_energy(struct part* molec, long int N, double *e)
     return 0;
 }
 
-int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]){
+int dist_radial(struct part *molec, long int N, double L, int bins, double hist[], double n_hist[]){
 
 	/*
 	*	Esta función genera la distribucion radial discretizando L en #bins.
 	*	El resultado se lo suma al vector hist (sin normalizar)
 	*	Elemplo:
-	*		int bins = 100;
-	*		int hist[bins];
+	*		int bins = 500;
+	*		double hist[bins];
+	*		float Ls = 3;
 	*
-	*		//Se inicializa la primera vez con todo en 0.
+	*		Se inicializa la primera vez con todo en 0.
 	*		for (i=0; i<bins; i++){ 
 	*			hist[i] = 0;
 	*		}
 	*
 	*		//n_hist representa es el 'eje x' del histograma.
-	*		float n_hist[bins];
+	*		double n_hist[bins];
 	*		for (i=0; i<bins; i++){
-	*			n_hist[i] = i*(2.5*L)/bins; // Ls=2
+	*			n_hist[i] = i*Ls*L/bins;
 	*		}
-	*		dist_radial(molec,N,L,bins,hist);		
+	*
+	*		dist_radial(molec,N,L,bins,hist,n_hist);		
 	*		for (i=0; i<bins; i++){
-	*			printf("%f    %i\n",n_hist[i], hist[i]);
+	*			printf("%f    %f\n",n_hist[i], hist[i]);
 	*		}
 	*/
 
-	float Ls = 2; // Cuantas copias hago a cada lado.
+	float Ls = 3; // Cuantas copias hago a cada lado.
 	int a,b,c,i,j,m=0;
 	double x1,x2,y1,y2,z1,z2,dx,dy,dz;
 	long int n = ((2*Ls+1)*(2*Ls+1)*(2*Ls+1))*(0.5*(N+1)*N);	
@@ -458,13 +460,24 @@ int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]){
 	}
 
 	// Genero el histogrma.
-	int H;
+	int H, total=0;
 	for (i=0; i<n; i++)
 	{
-		if (*(dist+i)<=(Ls+0.5)*L){
-			H = (int)(bins*(*(dist+i))/((Ls+0.5)*L));
+		if (*(dist+i)<=(Ls)*L){
+			H = (int)(bins*(*(dist+i))/(Ls*L));
 			hist[H] = hist[H]+1;
+			total = total+1;
 		}
+	}
+
+	for (i=0; i < bins; i++)
+	{
+		hist[i] = hist[i]/total;
+	}
+
+	double pi= 3.14159265358979323846;
+	for (i=0; i<bins; i++){
+		hist[i] = hist[i]/(4*pi*n_hist[i]*n_hist[i]*(n_hist[1]-n_hist[0])*N/(L*L*L));
 	}
 
 	free(dist);
