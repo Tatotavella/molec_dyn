@@ -46,6 +46,7 @@ int main(int argc, char **argv)
     FILE *file = fopen(filename, "w");
     double *lambda = malloc((Niter+1) * sizeof(*lambda));
     lambda[0] = ord_verlet(past, N, L);
+    FILE *fileHB = fopen("HB.csv", "w");//para funcion HBoltzman
     for (int i = 1; i < Niter+1; i++) {
         evolution_step(&past, &future, N, VF, Nr, L, h);
 
@@ -77,6 +78,12 @@ int main(int argc, char **argv)
         fprintf(file, "%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", i, lambda[i],
         past[particul].vx, past[particul].vy, past[particul].vz,
         past[particul].fx, past[particul].fy, past[particul].fz, e[1], e[2]);
+
+	//funcion H de Boltzman
+	double HB=HBoltzman(past,N);
+
+	fprintf(fileHB, "%d,%f\n", i, HB);
+	
     }
 
     /*
@@ -88,7 +95,9 @@ int main(int argc, char **argv)
     }
     */
     fclose(file);
+    fclose(fileHB);
     free(filename);
+  
 
     FILE *filemolec = fopen("molecevol.xyz", "w");
     for (int i = 0; i < 2000; i++) {

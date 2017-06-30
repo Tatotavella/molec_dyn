@@ -129,3 +129,16 @@ int rescale(struct part *molec, long int N, double T_old, double T_new);
  * Re-escaleo de velocidades
  * y muchas mas
  */
+double HBoltzman(struct part *molec, long int N);
+/*Esta funcioin va a recibir a past y devolver el valor de HBoltzmann en ese tiempo.
+Primero realiza un histograma sobre las velocidades. Luego calcula H.
+ */
+
+int histograma(struct part *molec, float *hist, int n, float a, float b, int numcol);
+/*Esta funcion realiza un histograma, con numcol la cantidad de bines, y extremos a y b, y cantidad de datos n=N
+    //y[0]...y[m-1] cuentas
+    //y[m]...y[m+m-1] marca de clase
+    //n: numero de datos
+    //[a,b] intervalo ext inf y sup
+    //numcol: numero de columnas
+    */
