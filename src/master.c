@@ -403,7 +403,7 @@ int system_energy(struct part* molec, long int N, double *e)
     return 0;
 }
 
-int dist_radial(struct part *molec, long int N, double L, int bins, double hist[], double n_hist[]){
+int dist_radial(struct part *molec, long int N, double L, int bins, double hist[], double n_hist[], float Ls){
 
 	/*
 	*	Esta función genera la distribucion radial discretizando L en #bins.
@@ -430,10 +430,10 @@ int dist_radial(struct part *molec, long int N, double L, int bins, double hist[
 	*		}
 	*/
 
-	float Ls = 3; // Cuantas copias hago a cada lado.
+
 	int a,b,c,i,j,m=0;
 	double x1,x2,y1,y2,z1,z2,dx,dy,dz;
-	long int n = ((2*Ls+1)*(2*Ls+1)*(2*Ls+1))*(0.5*(N+1)*N);	
+	long int n = N*(2*Ls+1)*(2*Ls+1)*(2*Ls+1);	
 	float *dist = malloc(n*sizeof(float));
 	
 	// Genero el vector de distancias.
@@ -444,9 +444,9 @@ int dist_radial(struct part *molec, long int N, double L, int bins, double hist[
 		{
 			for (c=-Ls; c<=Ls; c++)
 			{	
-				for (i=0; i<N; i++)
+				for (i=0; i<1; i++)
 				{
-					for (j=0; j<=i; j++)
+					for (j=0; j<N; j++)
 					{
 						x1 = molec[i].x, y1 = molec[i].y, z1 = molec[i].z; 
 						x2 = molec[j].x+a*L, y2 = molec[j].y+b*L, z2 = molec[j].z+c*L;
@@ -459,25 +459,15 @@ int dist_radial(struct part *molec, long int N, double L, int bins, double hist[
 		}
 	}
 
+
 	// Genero el histogrma.
-	int H, total=0;
+	int H;
 	for (i=0; i<n; i++)
 	{
-		if (*(dist+i)<=(Ls)*L){
+		if (*(dist+i)<=Ls*L){
 			H = (int)(bins*(*(dist+i))/(Ls*L));
 			hist[H] = hist[H]+1;
-			total = total+1;
 		}
-	}
-
-	for (i=0; i < bins; i++)
-	{
-		hist[i] = hist[i]/total;
-	}
-
-	double pi= 3.14159265358979323846;
-	for (i=0; i<bins; i++){
-		hist[i] = hist[i]/(4*pi*n_hist[i]*n_hist[i]*(n_hist[1]-n_hist[0])*N/(L*L*L));
 	}
 
 	free(dist);

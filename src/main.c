@@ -21,6 +21,19 @@ int main(int argc, char **argv)
 
     int particul = 0;
 
+    //Dist radial
+    int bins = 80;
+    double hist[bins];
+    double n_hist[bins];
+    float Ls = 6;
+    for (int i=0; i<bins; i++){ 
+        hist[i] = 0;
+    }
+    for (int i=0; i<bins; i++){
+        n_hist[i] = i*Ls*L/bins;
+    }
+    //
+    
     srand(time(NULL));
 
     struct part *past = malloc(N * sizeof(*past));
@@ -30,7 +43,7 @@ int main(int argc, char **argv)
         future[i].m = 1;
     }
     init_rv(past, N, &maxwell_boltzmann, L, T);
-
+    //dist_radial(past,N,L,bins,hist,n_hist,Ls);
     double *VF = malloc(3*Nr * sizeof(*VF));
     make_table(&funcion_LJ, &funcion_fuerza, Nr, L, VF);
     eval_f(past, N, L, VF, Nr);
@@ -44,6 +57,7 @@ int main(int argc, char **argv)
     char *filename = malloc((strlen(outdir) + 20) * sizeof(*filename));
     sprintf(filename, "%s/out.csv", outdir);
     FILE *file = fopen(filename, "w");
+    FILE *file2 = fopen("gr.csv", "w");
     double *lambda = malloc((Niter+1) * sizeof(*lambda));
     lambda[0] = ord_verlet(past, N, L);
     FILE *fileHB = fopen("HB.csv", "w");//para funcion HBoltzman
@@ -52,6 +66,10 @@ int main(int argc, char **argv)
 
         lambda[i] = ord_verlet(past, N, L);
 
+        
+        dist_radial(past,N,L,bins,hist,n_hist,Ls);
+        
+        
         vel_avg[i] = malloc(3 * sizeof(double));
         vel_var[i] = malloc(3 * sizeof(double));
         frz_avg[i] = malloc(3 * sizeof(double));
@@ -109,6 +127,21 @@ int main(int argc, char **argv)
         }
     }
     fclose(filemolec);
+
+    // Dist radial
+    for (int i=0; i < bins; i++)
+    {
+        hist[i] = hist[i]/Niter;
+    }
+    double pi= 3.14159265358979323846;
+    for (int i=0; i<bins; i++){
+        hist[i] = (L*L*L)*hist[i]/(4*pi*n_hist[i]*n_hist[i]*(n_hist[1]-n_hist[0])*N);
+    }
+    for (int i=0; i<bins; i++){
+        //printf("%f    %f\n",n_hist[i], hist[i]);
+        fprintf(file2, "%f    %f\n",n_hist[i], hist[i]);
+    }
+    //
 
     free(past);
     free(future);
