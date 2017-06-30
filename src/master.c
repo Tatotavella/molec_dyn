@@ -502,7 +502,7 @@ double HBoltzman(struct part *molec, long int N){
   float a=-20.0;
   float b=20.0;
   int n=N;//numero de datos que se le pasan a histograma es igual al numero de molec, una vel por molecula
-  int numcol=100;
+  int numcol=20;
   double bin=(b-a)/numcol;
   float *hist=malloc(2*numcol*sizeof(float));
   histograma(molec, hist, n, a, b, numcol);
