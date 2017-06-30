@@ -15,18 +15,18 @@ int make_table(double(*funcion_LJ)(double), double(*funcion_fuerza)(double), int
         *       Además calcula la separación dr de los valores de
         *       la tabla mediante L y numpoints.
 	*       El array *tabla se llenara de la siguiente manera:
-        *         r_o, r_1,...,r_(numpoints-1), f(r_o), f(r_1), ...,f(r_numpoints-1), V(r_o), V(r_1), ...,V(r_numpoints-1) 
-	*/ 
+        *         r_o, r_1,...,r_(numpoints-1), f(r_o), f(r_1), ...,f(r_numpoints-1), V(r_o), V(r_1), ...,V(r_numpoints-1)
+	*/
  {
   double dr=L/numpoints;
   for (int i=0;i<numpoints;i++)
     {
       tabla[i]=dr*(i+1);                                //fila 1: x                           r
       tabla[i+numpoints]=funcion_fuerza(tabla[i]);      //fila 2: funcion_potencial(x)     potencial
-      tabla[i+2*numpoints]=funcion_LJ(tabla[i]);        //fila 3: funcion_LJ(x)             fuerza                                    
+      tabla[i+2*numpoints]=funcion_LJ(tabla[i]);        //fila 3: funcion_LJ(x)             fuerza
     }
   return 0;
- } 
+ }
 
 double funcion_LJ(double r)
        /*
@@ -269,10 +269,11 @@ int new_pos(struct part *past, struct part *future, long int N, double L, double
 }
 
 
-int new_vel(struct part *past, struct part *future, long int N, double L, double h){
+int new_vel(struct part *past, struct part *future, long int N, double L, double h,struct termo_data *data){
  long int i;
  double vx_new, vy_new, vz_new;
  double ecin;
+ (*data).K = 0;
  for(i=0; i<N; i++)
  {
    //Calculo de las nuevas velocidades
@@ -288,12 +289,12 @@ int new_vel(struct part *past, struct part *future, long int N, double L, double
    //Energia cinetica
    ecin = (vx_new*vx_new + vy_new*vy_new + vz_new*vz_new)*future[i].m/2;
    future[i].ec = ecin;
-
+   (*data).K += ecin;
  }
  return 0;
 }
 
-int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoints){
+int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoints, struct termo_data *data){
  long int i,j;
  double pre_force,potential;
  double x_dir,y_dir,z_dir;
@@ -302,7 +303,7 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
  double dr = L / numpoints;
  int index;
  double r_part;
- //Fuerzas a 0. Potencial a 0
+ //Fuerzas a 0. Potencial a 0 e inicializacion de presion y energia total a 0
  for (i = 0; i < N; i++)
  {
      molec[i].fx = 0;
@@ -310,6 +311,8 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
      molec[i].fz = 0;
      molec[i].ep = 0;
  }
+ (*data).V = 0;
+ (*data).Pex = 0;
  //Recorro todos los pares de particulas
  for(i=0; i<N; i++)
  {
@@ -352,34 +355,29 @@ int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoint
     molec[j].fy += -1 * pre_force * y_dir;
     molec[j].fz += -1 * pre_force * z_dir;
 
-    /*
-    if(r_part<3)
-    {
-      printf("Interaccion part: %ld con %ld\n",i,j);
-      printf("Distancia: %f, fuerza %f\n",r_part,pre_force);
-      printf("Velocidades part: %ld vx: %f, vy: %f, vz: %f\n",i,
-              molec[i].vx,molec[i].vy,molec[i].vz);
-      printf("Velocidades part: %ld vx: %f, vy: %f, vz: %f\n",i,
-              molec[i].vx,molec[i].vy,molec[i].vz);
-      printf("Velocidades part: %ld vx: %f, vy: %f, vz: %f\n",j,
-                      molec[j].vx,molec[j].vy,molec[j].vz);
-    }
-    */
+    //Energia potencial total y presion
+    (*data).V += potential;
+    (*data).Pex += r_part*pre_force;
    }
  }
+ (*data).Pex = (*data).Pex / (3*L*L*L);
  return 0;
 }
 
-int evolution_step(struct part **past, struct part **future, long int N, double *VF, int Nr, double L, double h)
+int evolution_step(struct part **past, struct part **future, long int N, double *VF, int Nr, double L, double h, struct termo_data *data)
 {
     struct part *tmp;
 
     new_pos(*past, *future, N, L, h);
-    eval_f(*future, N, L, VF, Nr);
-    new_vel(*past, *future, N, L, h);
+    eval_f(*future, N, L, VF, Nr, data);
+    new_vel(*past, *future, N, L, h, data);
+    //Switch states
     tmp = *past;
     *past = *future;
     *future = tmp;
+    //Total Energy
+    (*data).E = (*data).K + (*data).V;
+
 
     return 0;
 }
@@ -413,7 +411,7 @@ int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]){
 	*		int hist[bins];
 	*
 	*		//Se inicializa la primera vez con todo en 0.
-	*		for (i=0; i<bins; i++){ 
+	*		for (i=0; i<bins; i++){
 	*			hist[i] = 0;
 	*		}
 	*
@@ -422,7 +420,7 @@ int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]){
 	*		for (i=0; i<bins; i++){
 	*			n_hist[i] = i*(2.5*L)/bins; // Ls=2
 	*		}
-	*		dist_radial(molec,N,L,bins,hist);		
+	*		dist_radial(molec,N,L,bins,hist);
 	*		for (i=0; i<bins; i++){
 	*			printf("%f    %i\n",n_hist[i], hist[i]);
 	*		}
@@ -431,9 +429,9 @@ int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]){
 	float Ls = 2; // Cuantas copias hago a cada lado.
 	int a,b,c,i,j,m=0;
 	double x1,x2,y1,y2,z1,z2,dx,dy,dz;
-	long int n = ((2*Ls+1)*(2*Ls+1)*(2*Ls+1))*(0.5*(N+1)*N);	
+	long int n = ((2*Ls+1)*(2*Ls+1)*(2*Ls+1))*(0.5*(N+1)*N);
 	float *dist = malloc(n*sizeof(float));
-	
+
 	// Genero el vector de distancias.
 
 	for (a=-Ls; a<=Ls; a++)
@@ -441,19 +439,19 @@ int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]){
 		for (b=-Ls; b<=Ls; b++)
 		{
 			for (c=-Ls; c<=Ls; c++)
-			{	
+			{
 				for (i=0; i<N; i++)
 				{
 					for (j=0; j<=i; j++)
 					{
-						x1 = molec[i].x, y1 = molec[i].y, z1 = molec[i].z; 
+						x1 = molec[i].x, y1 = molec[i].y, z1 = molec[i].z;
 						x2 = molec[j].x+a*L, y2 = molec[j].y+b*L, z2 = molec[j].z+c*L;
 						dx = x2-x1, dy = y2-y1, dz = z2-z1;
 						*(dist+m) = sqrt(dx*dx+dy*dy+dz*dz);
 						m = m+1;
 					}
 				}
-			}	
+			}
 		}
 	}
 
@@ -496,7 +494,7 @@ double HBoltzman(struct part *molec, long int N){
     /*Esta funcion va a recibir a past y devolver el valor de HBoltzmann en ese "tiempo".
     Primero realiza un histograma sobre las velocidades. Luego calcula H a partir de este.
     */
-  
+
   double H=0;
   //histograma
   float a=-20.0;
@@ -518,10 +516,10 @@ double HBoltzman(struct part *molec, long int N){
 	}
     }
   //printf("H %f\n",H);
-       
+
 free(hist);
 return H;
-  
+
 }
 
 int histograma(struct part *molec, float *hist, int n, float a, float b, int numcol){
@@ -533,7 +531,7 @@ int histograma(struct part *molec, float *hist, int n, float a, float b, int num
      *[a,b] intervalo ext inf y sup
      *numcol: ancho del bin
      */
-  
+
 int i, j;
 float bin, s; //numcl numero de bines y s es la cuenta de 1 pero normalizada s=1/n
 
@@ -550,20 +548,20 @@ for(i=0;i<numcol;i++)
 
 for(i=0;i<n;i++) //recorro el vector de datos
   {
-      
+
       j=(int)floor(((molec[i].vx)-a)/bin); //asi calculo en que numero de bin cae(bin 0, bin 1, bin 2, etc...), aca tambien es donde indico que cosa quiero histogreamear en ste caso es molec[i].vx
 
       if (j<0) {j=0;} //caso de que el dato este por debajo del extremo inf
       if (j>numcol) {j=numcol-1;}// caso de que el dato este por encima del extremo sup
 
       hist[j]=hist[j]+s;// o le sumo 1 si es que no lo quiero normalizado
-    }  
+    }
 
 //printf("clase\tcuenta\n");
 //for(j=0;j<numcol;j++){
-    
+
   //printf("%f\t%f\n",hist[numcol+j],hist[j]);}
 
- return 0; 
+ return 0;
 
 }
