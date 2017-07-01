@@ -495,77 +495,61 @@ int rescale(struct part *molec, long int N, double T_old, double T_new){
 
 }
 
-double HBoltzman(struct part *molec, long int N){
-    /*Esta funcion va a recibir a past y devolver el valor de HBoltzmann en ese "tiempo".
-    Primero realiza un histograma sobre las velocidades. Luego calcula H a partir de este.
+double HBoltzman(struct part *molec, float *hist, long int numbin, double bin){
+    /*Esta funcion va a recibir a past, a hist y al numero de bines y devolver el valor de HBoltzmann en ese "tiempo".
+    Toma el histograma de las velocidades sobre las velocidades y a partir de este calcula H.
     */
   
   double H=0;
-  //histograma
-  float a=-20.0;
-  float b=20.0;
-  int n=N;//numero de datos que se le pasan a histograma es igual al numero de molec, una vel por molecula
-  int numcol=20;
-  double bin=(b-a)/numcol;
-  float *hist=malloc(2*numcol*sizeof(float));
-  histograma(molec, hist, n, a, b, numcol);
-
+ 
   //calculo de HBoltzman
   float sumo=0;
-  for (int i=0;i<numcol;i++)
+  for (int i=0;i<numbin;i++)
     {
       if (hist[i]>0)
 	{
-          sumo=hist[i]*log(hist[i])*bin;
+          sumo=hist[i]*log(hist[i]/(hist[numbin+i]*hist[numbin+i]*hist[numbin+i]));
           H=H+sumo;
 	}
     }
-  //printf("H %f\n",H);
        
-free(hist);
 return H;
   
 }
 
-int histograma(struct part *molec, float *hist, int n, float a, float b, int numcol){
+int histograma(double *vel, float *hist, int n, float a, float b, int numbin){
     /*
-     *Esta funcion realiza un histograma de las velocidades vx, con numcol la cantidad de bines, extremos a y b, y cantidad de datos n=N el num de molec
+     *Esta funcion realiza un histograma de las velocidades vx, con numbin la cantidad de bines, extremos a y b, y cantidad de datos n=N el num de molec
      *y[0]...y[m-1] cuentas
      *y[m]...y[m+m-1] marca de clase
      *n: numero de datos
      *[a,b] intervalo ext inf y sup
-     *numcol: ancho del bin
+     *bin: ancho del bin
      */
   
 int i, j;
-float bin, s; //numcl numero de bines y s es la cuenta de 1 pero normalizada s=1/n
+float bin, s; //numero de bines y s es la cuenta de 1 pero normalizada s=1/n
+bin=(b-a)/numbin;
+s=1.0/(n*bin); //para normalizar un histograma de una funcion de densidad tambien importa el ancho del bin
 
-s=1.0/n;
-bin=(b-a)/numcol;
 
-//printf("Histograma\n");
 
-for(i=0;i<numcol;i++)
+for(i=0;i<numbin;i++)
     {
       *(hist+i)=0.0; //inicializo con ceros las cuentas
-      *(hist+numcol+i)=(float)(i*bin+a+(bin/2)); //calculo las marcas de clase
+      *(hist+numbin+i)=(float)(i*bin+a+(bin/2)); //calculo las marcas de clase
     }
 
 for(i=0;i<n;i++) //recorro el vector de datos
   {
       
-      j=(int)floor(((molec[i].vx)-a)/bin); //asi calculo en que numero de bin cae(bin 0, bin 1, bin 2, etc...), aca tambien es donde indico que cosa quiero histogreamear en ste caso es molec[i].vx
+      j=(int)floor(((vel[i])-a)/bin); //asi calculo en que numero de bin cae(bin 0, bin 1, bin 2, etc...), aca tambien es donde indico que cosa quiero histogreamear en ste caso es molec[i].vx
 
       if (j<0) {j=0;} //caso de que el dato este por debajo del extremo inf
-      if (j>numcol) {j=numcol-1;}// caso de que el dato este por encima del extremo sup
+      if (j>numbin) {j=numbin-1;}// caso de que el dato este por encima del extremo sup
 
       hist[j]=hist[j]+s;// o le sumo 1 si es que no lo quiero normalizado
     }  
-
-//printf("clase\tcuenta\n");
-//for(j=0;j<numcol;j++){
-    
-  //printf("%f\t%f\n",hist[numcol+j],hist[j]);}
 
  return 0; 
 

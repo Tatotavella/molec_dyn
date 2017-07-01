@@ -97,11 +97,37 @@ int main(int argc, char **argv)
         past[particul].vx, past[particul].vy, past[particul].vz,
         past[particul].fx, past[particul].fy, past[particul].fz, e[1], e[2]);
 
-	//funcion H de Boltzman
-	double HB=HBoltzman(past,N);
-
-	fprintf(fileHB, "%d,%f\n", i, HB);
-	
+	//Funcion H de Boltzman
+	 //Histograma de las velocidades en cada paso
+          float a=0;
+          float b=4;
+          int n=N;//numero de datos que se le pasan a histograma es igual al numero de molec, una vel por molecula
+          int numbin=10;
+          double bin=(b-a)/numbin;
+	  //armo vector de velocidades
+	  double *vel=malloc(N*sizeof(double));
+	  for (int k=0;k<N;k++)
+	    {
+	      vel[k]=sqrt((past[k].vx*past[k].vx)+(past[k].vy*past[k].vy)+(past[k].vz*past[k].vz));
+	    }
+		 
+          float *hist=malloc(2*numbin*sizeof(float));
+          histograma(vel, hist, n, a, b, numbin);
+	  
+	  //Imprimo el ultimo cuando ya termalizo
+	  if (i==Niter-1)
+	    {
+	     FILE *filehistvel = fopen("histvel.csv", "w");//para funcion HBoltzman
+	     for(int j=0;j<numbin;j++)
+	      {
+		fprintf(filehistvel,"%f,%f\n",hist[numbin+j],hist[j]);
+	      }
+	     fclose(filehistvel);
+	    }
+	    
+	  double HB=HBoltzman(past,hist,numbin,bin); //calcula la H Boltzman del paso i
+          fprintf(fileHB, "%d,%f\n", i, HB);
+	  free(hist);
     }
 
     /*
