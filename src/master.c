@@ -444,9 +444,9 @@ int dist_radial(struct part *molec, long int N, double L, int bins, double hist[
 		{
 			for (c=-Ls; c<=Ls; c++)
 			{	
-				for (i=0; i<1; i++)
+				for (i=0; i<N; i++)
 				{
-					for (j=0; j<N; j++)
+					for (j=0; j<i; j++)
 					{
 						x1 = molec[i].x, y1 = molec[i].y, z1 = molec[i].z; 
 						x2 = molec[j].x+a*L, y2 = molec[j].y+b*L, z2 = molec[j].z+c*L;

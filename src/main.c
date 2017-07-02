@@ -161,7 +161,7 @@ int main(int argc, char **argv)
     }
     double pi= 3.14159265358979323846;
     for (int i=0; i<bins; i++){
-        hist[i] = (L*L*L)*hist[i]/(4*pi*n_hist[i]*n_hist[i]*(n_hist[1]-n_hist[0])*N);
+        hist[i] = (L*L*L)*hist[i]/(4*pi*n_hist[i]*n_hist[i]*(n_hist[1]-n_hist[0])*N*N/2);
     }
     for (int i=0; i<bins; i++){
         //printf("%f    %f\n",n_hist[i], hist[i]);
