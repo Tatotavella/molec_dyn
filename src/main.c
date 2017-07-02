@@ -38,6 +38,8 @@ int main(int argc, char **argv)
 
     struct part *past = malloc(N * sizeof(*past));
     struct part *future = malloc(N * sizeof(*future));
+    struct thermo_data *data = malloc((Niter+1) * sizeof(*data));
+
     for (int i = 0; i < N; i++) {
         past[i].m = 1;
         future[i].m = 1;
@@ -46,7 +48,7 @@ int main(int argc, char **argv)
     //dist_radial(past,N,L,bins,hist,n_hist,Ls);
     double *VF = malloc(3*Nr * sizeof(*VF));
     make_table(&funcion_LJ, &funcion_fuerza, Nr, L, VF);
-    eval_f(past, N, L, VF, Nr);
+    eval_f(past, N, L, VF, Nr, data);
 
     double **vel_avg = malloc((Niter+1) * sizeof(*vel_avg));
     double **vel_var = malloc((Niter+1) * sizeof(*vel_var));
@@ -62,7 +64,7 @@ int main(int argc, char **argv)
     lambda[0] = ord_verlet(past, N, L);
     FILE *fileHB = fopen("HB.csv", "w");//para funcion HBoltzman
     for (int i = 1; i < Niter+1; i++) {
-        evolution_step(&past, &future, N, VF, Nr, L, h);
+        evolution_step(&past, &future, N, VF, Nr, L, h, (data+i));
 
         lambda[i] = ord_verlet(past, N, L);
 
@@ -88,14 +90,14 @@ int main(int argc, char **argv)
         fprintf(file, "%d,%f,%f,%f,%f,%f,%f,%f\n", i, lambda[i],
                 past[particul].vx, past[particul].vy, past[particul].vz,
                 past[particul].fx, past[particul].fy, past[particul].fz);
-        */
+
         //Energia
         double e[3];
         system_energy(past, N, e);
-
+        */
         fprintf(file, "%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", i, lambda[i],
         past[particul].vx, past[particul].vy, past[particul].vz,
-        past[particul].fx, past[particul].fy, past[particul].fz, e[1], e[2]);
+        past[particul].fx, past[particul].fy, past[particul].fz, data[i].K, data[i].V);
 
 	//Funcion H de Boltzman
 	 //Histograma de las velocidades en cada paso
@@ -141,11 +143,13 @@ int main(int argc, char **argv)
     fclose(file);
     fclose(fileHB);
     free(filename);
-  
+
+    long int vmd_iter = 2000;
+    struct thermo_data *data_vmd = malloc(vmd_iter * sizeof(*data_vmd));
 
     FILE *filemolec = fopen("molecevol.xyz", "w");
-    for (int i = 0; i < 2000; i++) {
-        evolution_step(&past, &future, N, VF, Nr, L, h);
+    for (int i = 0; i < vmd_iter; i++) {
+        evolution_step(&past, &future, N, VF, Nr, L, h, (data_vmd+i));
 
         fprintf(filemolec, "%d\nmoleculas\n", N);
         for (int j = 0; j < N; j++) {
@@ -171,6 +175,8 @@ int main(int argc, char **argv)
 
     free(past);
     free(future);
+    free(data);
+    free(data_vmd);
     free(VF);
     free(lambda);
     free(vel_avg);
@@ -269,4 +275,3 @@ int parse_options(char ** argv, int argc, int *n, double *L, double *dr,
 
     return 0;
 }
-

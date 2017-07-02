@@ -24,6 +24,15 @@ struct part
 	double m; //Masa
 };
 
+struct thermo_data {
+   /* Propiedades termodinamicas del sistema
+    */
+   double K; //Energia Cinetica
+   double V; //Energia Potencial
+   double E; //Energia Total
+   double Pex; //Presion de exceso
+};
+
 int init_rv(struct part *molec, long int N, double (*func)(double,double), double L, double T);
 // Recibe una funcion y asigna al azar las velocidades de la distribucion "func" que recive (v,T).
 // Ordena las particulas equiespaciadas.
@@ -33,7 +42,7 @@ int promvar_f(struct part *molec, long int N, double *prom, double *var);
 // Calculan promedio y varianza y lo escriben en prom y var. v y f respectivamente
 // En prom y var escriben los 3 valores promedio. x -> 0 ; y -> 1 ; z -> 2
 
-int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoints);
+int eval_f(struct part *molec, long int N, double L, double *tabla, int numpoints, struct thermo_data *data);
 /*
  * @brief Escribe las fuerzas y potenciales en el struct @p *molec utilizando la
  * @brief discretizacion provista en @p *tabla de fuerza y potencial.
@@ -71,7 +80,7 @@ int new_pos(struct part *past, struct part *future, long int N, double L, double
  * @author Franco Tavella
  */
 
-int new_vel(struct part *past, struct part *future, long int N, double L, double h);
+int new_vel(struct part *past, struct part *future, long int N, double L, double h, struct thermo_data *data);
 /*
  * @brief Escribe velocidades futuras en el @p *future a partir de aquellas del
  * @brief instante  @p h anterior @p *past. Se utiliza la actualizacion
@@ -102,7 +111,7 @@ int new_vel(struct part *past, struct part *future, long int N, double L, double
     @param L tamano de la caja de simulacion.
     @param h tamano del paso temporal de la integracion numerica.
 */
-int evolution_step(struct part **past, struct part **future, long int N, double *VF, int Nr, double L, double h);
+int evolution_step(struct part **past, struct part **future, long int N, double *VF, int Nr, double L, double h, struct thermo_data *data);
 
 /*! Calcula la energia del sistema
 
