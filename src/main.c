@@ -22,10 +22,10 @@ int main(int argc, char **argv)
     int particul = 0;
 
     //Dist radial
-    int bins = 80;
+    int bins = 500;
     double hist[bins];
     double n_hist[bins];
-    float Ls = 6;
+    float Ls = 1;
     for (int i=0; i<bins; i++){ 
         hist[i] = 0;
     }
