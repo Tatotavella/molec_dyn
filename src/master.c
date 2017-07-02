@@ -431,12 +431,12 @@ int dist_radial(struct part *molec, long int N, double L, int bins, double hist[
 	*/
 
 
-	int a,b,c,i,j,m=0;
+	int a,b,c,i,j;
 	double x1,x2,y1,y2,z1,z2,dx,dy,dz;
-	long int n = N*(2*Ls+1)*(2*Ls+1)*(2*Ls+1);	
-	float *dist = malloc(n*sizeof(float));
-	
-	// Genero el vector de distancias.
+	double dist = 0;
+	int H;
+
+	// Genero el histograma.
 
 	for (a=-Ls; a<=Ls; a++)
 	{
@@ -451,29 +451,18 @@ int dist_radial(struct part *molec, long int N, double L, int bins, double hist[
 						x1 = molec[i].x, y1 = molec[i].y, z1 = molec[i].z; 
 						x2 = molec[j].x+a*L, y2 = molec[j].y+b*L, z2 = molec[j].z+c*L;
 						dx = x2-x1, dy = y2-y1, dz = z2-z1;
-						*(dist+m) = sqrt(dx*dx+dy*dy+dz*dz);
-						m = m+1;
+						dist = sqrt(dx*dx+dy*dy+dz*dz);
+						if (dist <= Ls*L) {
+							H = (int)(bins*dist/(Ls*L));
+							hist[H] = hist[H]+1;
+						}
 					}
 				}
 			}	
 		}
 	}
 
-
-	// Genero el histogrma.
-	int H;
-	for (i=0; i<n; i++)
-	{
-		if (*(dist+i)<=Ls*L){
-			H = (int)(bins*(*(dist+i))/(Ls*L));
-			hist[H] = hist[H]+1;
-		}
-	}
-
-	free(dist);
-
 	return 0;
-
 }
 
 
