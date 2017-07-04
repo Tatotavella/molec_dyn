@@ -127,7 +127,7 @@ int system_energy(struct part* molec, long int N, double *e);
 double ord_verlet(struct part *molec, long int N, double L);
 //Devuelve el parametro de ordenamiento geometrico de Verlet
 
-int dist_radial(struct part *molec, long int N, double L, int bins, double hist[], double n_hist[],float Ls);
+int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]);
 // Genera la distribución radial.
 
 int rescale(struct part *molec, long int N, double T_old, double T_new);
