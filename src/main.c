@@ -2,204 +2,234 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 #include "master.h"
 #include "distribuciones.h"
 
 int parse_options(char ** argv, int argc, int *n, double *L, double *dr,
-                  double *h, double *T, int *niter, char **outdir);
+                  double *h, double *Ti, double *Tf, int *Tsteps,
+                  int *nsamples, int *nsep, int *ntherm, char **outdir);
+
+int radial_distribution_bins(double Ls, double L, int nbins, double *bins);
+
+int radial_distribution_normalization(double Ls, double L, long int N, int nsamples, int nbins, double *bins, double *freq);
 
 int main(int argc, char **argv)
 {
-    int n, N, Niter, Nr;
-    double L, dr, h, T;
-    char *outdir;
+    /* Parse options and setup all program configuration options */
+    int n, N, Nr, Tsteps, nsamples, nsep, ntherm;
+    double L, dr, h, Ti, Tf, dT;
+    char *outdir, *filename_continuous_data, *filename_cooling_data, *filename_radialdist_data, *filename_trajectories_data;
+    FILE *file_continuous_data, *file_cooling_data, *file_radialdist_data, *file_trajectories_data;
 
-    int ret = parse_options(argv, argc, &n, &L, &dr, &h, &T, &Niter, &outdir);
+    int ret = parse_options(argv, argc, &n, &L, &dr, &h, &Ti, &Tf, &Tsteps, &nsamples, &nsep, &ntherm, &outdir);
     if (ret) return 1;
     N = n*n*n;
     Nr = L/dr;
+    dT = -(Ti - Tf)/(Tsteps - 1);
 
-    int particul = 0;
+    filename_continuous_data = malloc((strlen(outdir) + 20) * sizeof(*filename_continuous_data));
+    sprintf(filename_continuous_data, "%s/continuous_data.csv", outdir);
+    file_continuous_data = fopen(filename_continuous_data, "w");
 
-    //Dist radial
-    int bins = 500;
-    double hist[bins];
-    double n_hist[bins];
-    float Ls = 1;
-    for (int i=0; i<bins; i++){ 
-        hist[i] = 0;
-    }
-    for (int i=0; i<bins; i++){
-        n_hist[i] = i*Ls*L/bins;
-    }
-    //
-    
+    filename_cooling_data = malloc((strlen(outdir) + 20) * sizeof(*filename_cooling_data));
+    sprintf(filename_cooling_data, "%s/cooling_data.csv", outdir);
+    file_cooling_data = fopen(filename_cooling_data, "w");
+
+    filename_radialdist_data = malloc((strlen(outdir) + 20) * sizeof(*filename_radialdist_data));
+    sprintf(filename_radialdist_data, "%s/radialdist_data.csv", outdir);
+    file_radialdist_data = fopen(filename_radialdist_data, "w");
+
+    filename_trajectories_data = malloc((strlen(outdir) + 40) * sizeof(*filename_trajectories_data));
+
     srand(time(NULL));
 
+    /* Initialize system */
     struct part *past = malloc(N * sizeof(*past));
     struct part *future = malloc(N * sizeof(*future));
-    struct thermo_data *data = malloc((Niter+1) * sizeof(*data));
-
+    struct thermo_data observables;
     for (int i = 0; i < N; i++) {
         past[i].m = 1;
         future[i].m = 1;
     }
-    init_rv(past, N, &maxwell_boltzmann, L, T);
-    //dist_radial(past,N,L,bins,hist,n_hist,Ls);
+    init_rv(past, N, &maxwell_boltzmann, L, Ti, &observables);
+
     double *VF = malloc(3*Nr * sizeof(*VF));
     make_table(&funcion_LJ, &funcion_fuerza, Nr, L, VF);
-    eval_f(past, N, L, VF, Nr, data);
+    eval_f(past, N, L, VF, Nr, &observables);
+    observables.E = observables.K + observables.V;
 
-    double **vel_avg = malloc((Niter+1) * sizeof(*vel_avg));
-    double **vel_var = malloc((Niter+1) * sizeof(*vel_var));
-    double **frz_avg = malloc((Niter+1) * sizeof(*frz_avg));
-    double **frz_var = malloc((Niter+1) * sizeof(*frz_var));
+	int nbins = 500;
+	double Ls = 1;
+	double *rdist_bins = malloc(nbins * sizeof(*rdist_bins));
+	double *rdist_freq_ini = malloc(nbins * sizeof(*rdist_freq_ini));
+	double *rdist_freq_fin = malloc(nbins * sizeof(*rdist_freq_fin));
+	radial_distribution_bins(Ls, L, nbins, rdist_bins);
+	for (int i = 0; i < nbins; i++) {
+		rdist_freq_ini[i] = 0;
+		rdist_freq_fin[i] = 0;
+	}
 
-    printf("running thermalization ...\n");
-    char *filename = malloc((strlen(outdir) + 20) * sizeof(*filename));
-    sprintf(filename, "%s/out.csv", outdir);
-    FILE *file = fopen(filename, "w");
-    FILE *file2 = fopen("gr.csv", "w");
-    double *lambda = malloc((Niter+1) * sizeof(*lambda));
-    lambda[0] = ord_verlet(past, N, L);
-    FILE *fileHB = fopen("HB.csv", "w");//para funcion HBoltzman
-    for (int i = 1; i < Niter+1; i++) {
-        evolution_step(&past, &future, N, VF, Nr, L, h, (data+i));
+    /* Perform temperature sweep */
+    printf("performing temperature sweep ...\n");
+    struct thermo_data observables_avg = { 0, 0, 0, 0 };
+    struct thermo_data observables_var = { 0, 0, 0, 0 };
+    double Tnew, Tprev;
+    for (int i = 0; i < Tsteps; i++) {
+        /* New step temperature */
+        Tnew = Ti + dT*i;
 
-        lambda[i] = ord_verlet(past, N, L);
+        /* Create trajectories file */
+        sprintf(filename_trajectories_data, "%s/trajectories_%f_data.csv", outdir, Tnew);
+        file_trajectories_data = fopen(filename_trajectories_data, "w");
 
-        
-        dist_radial(past,N,L,bins,hist,n_hist,Ls);
-        
-        
-        vel_avg[i] = malloc(3 * sizeof(double));
-        vel_var[i] = malloc(3 * sizeof(double));
-        frz_avg[i] = malloc(3 * sizeof(double));
-        frz_var[i] = malloc(3 * sizeof(double));
-        promvar_v(past, N, vel_avg[i], vel_var[i]);
-        promvar_f(past, N, frz_avg[i], frz_var[i]);
-
-        printf("done with %d / %d\n", i, Niter);
-        /*
-
-        fprintf(file, "%d,%f,%f,%f,%f,%f,%f,%f\n", i, lambda[i],
-                vel_avg[i][0], vel_avg[i][1], vel_avg[i][2],
-                frz_avg[i][0], frz_avg[i][1], frz_avg[i][2]);
-        */
-        /*
-        fprintf(file, "%d,%f,%f,%f,%f,%f,%f,%f\n", i, lambda[i],
-                past[particul].vx, past[particul].vy, past[particul].vz,
-                past[particul].fx, past[particul].fy, past[particul].fz);
-
-        //Energia
-        double e[3];
-        system_energy(past, N, e);
-        */
-        fprintf(file, "%d,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", i, lambda[i],
-        past[particul].vx, past[particul].vy, past[particul].vz,
-        past[particul].fx, past[particul].fy, past[particul].fz, data[i].K, data[i].V);
-
-	//Funcion H de Boltzman
-	 //Histograma de las velocidades en cada paso
-          float a=0;
-          float b=4;
-          int n=N;//numero de datos que se le pasan a histograma es igual al numero de molec, una vel por molecula
-          int numbin=10;
-          double bin=(b-a)/numbin;
-	  //armo vector de velocidades
-	  double *vel=malloc(N*sizeof(double));
-	  for (int k=0;k<N;k++)
-	    {
-	      vel[k]=sqrt((past[k].vx*past[k].vx)+(past[k].vy*past[k].vy)+(past[k].vz*past[k].vz));
-	    }
-		 
-          float *hist=malloc(2*numbin*sizeof(float));
-          histograma(vel, hist, n, a, b, numbin);
-	  
-	  //Imprimo el ultimo cuando ya termalizo
-	  if (i==Niter-1)
-	    {
-	     FILE *filehistvel = fopen("histvel.csv", "w");//para funcion HBoltzman
-	     for(int j=0;j<numbin;j++)
-	      {
-		fprintf(filehistvel,"%f,%f\n",hist[numbin+j],hist[j]);
-	      }
-	     fclose(filehistvel);
-	    }
-	    
-	  double HB=HBoltzman(past,hist,numbin,bin); //calcula la H Boltzman del paso i
-          fprintf(fileHB, "%d,%f\n", i, HB);
-	  free(hist);
-    }
-
-    /*
-    FILE *file = fopen("out.csv", "w");
-    for (int i = 0; i < Niter+1; i++) {
-        fprintf(file, "%d,%f,%f,%f,%f,%f,%f,%f\n", i, lambda[i],
-                vel_avg[i][0], vel_avg[i][1], vel_avg[i][2],
-                frz_avg[i][0], frz_avg[i][1], frz_avg[i][2]);
-    }
-    */
-    fclose(file);
-    fclose(fileHB);
-    free(filename);
-
-    long int vmd_iter = 2000;
-    struct thermo_data *data_vmd = malloc(vmd_iter * sizeof(*data_vmd));
-
-    FILE *filemolec = fopen("molecevol.xyz", "w");
-    for (int i = 0; i < vmd_iter; i++) {
-        evolution_step(&past, &future, N, VF, Nr, L, h, (data_vmd+i));
-
-        fprintf(filemolec, "%d\nmoleculas\n", N);
-        for (int j = 0; j < N; j++) {
-            fprintf(filemolec, "%d %f %f %f\n", j+1, past[j].x, past[j].y, past[j].z);
+        /* Thermalization */
+        for (int j = 0; j < ntherm; j++) {
+            if (j % 10 == 0) {
+                Tprev = 2 * observables.K / (3 * N);
+                rescale(past, N, Tprev, Tnew);
+            }
+            evolution_step(&past, &future, N, VF, Nr, L, h, &observables);
+            fprintf(file_continuous_data, "%f,%f,%f,%f\n", observables.K, observables.V, observables.E, observables.Pex);
         }
-    }
-    fclose(filemolec);
 
-    // Dist radial
-    for (int i=0; i < bins; i++)
-    {
-        hist[i] = hist[i]/Niter;
+        for (int j = 0; j < ntherm/10; j++) {
+            evolution_step(&past, &future, N, VF, Nr, L, h, &observables);
+            fprintf(file_continuous_data, "%f,%f,%f,%f\n", observables.K, observables.V, observables.E, observables.Pex);
+        }
+
+        /* Measurement */
+        observables_avg = (struct thermo_data) { 0, 0, 0, 0 };
+        observables_var = (struct thermo_data) { 0, 0, 0, 0 };
+
+        for (int j = 0; j < nsamples; j++) {
+            for (int k = 0; k < nsep; k++) {
+                evolution_step(&past, &future, N, VF, Nr, L, h, &observables);
+                fprintf(file_continuous_data, "%f,%f,%f,%f\n", observables.K, observables.V, observables.E, observables.Pex);
+				if (i == 0) {
+					dist_radial(past, N, L, nbins, rdist_freq_ini, rdist_bins, Ls);
+				} else if (i == Tsteps-1) {
+					dist_radial(past, N, L, nbins, rdist_freq_fin, rdist_bins, Ls);
+				}
+            }
+
+            observables_avg.K += observables.K;
+            observables_avg.V += observables.V;
+            observables_avg.E += observables.E;
+            observables_avg.Pex += observables.Pex;
+
+            observables_var.K += observables.K * observables.K;
+            observables_var.V += observables.V * observables.V;
+            observables_var.E += observables.E * observables.E;
+            observables_var.Pex += observables.Pex * observables.Pex;
+
+            for (long int k = 0; k < N; k++) {
+                fprintf(file_trajectories_data, "%ld,%f,%f,%f,%f,%f,%f,%f,%f\n", k+1,
+                        past[k].x, past[k].y, past[k].z,
+                        past[k].vx, past[k].vy, past[k].vz,
+                        past[k].ec, past[k].ep);
+            }
+        }
+
+        observables_avg.K /= nsamples;
+        observables_avg.V /= nsamples;
+        observables_avg.E /= nsamples;
+        observables_avg.Pex /= nsamples;
+
+        observables_var.K = observables_var.K / nsamples - observables_avg.K * observables_avg.K;
+        observables_var.V = observables_var.V / nsamples - observables_avg.V * observables_avg.V;
+        observables_var.E = observables_var.E / nsamples - observables_avg.E * observables_avg.E;
+        observables_var.Pex = observables_var.Pex / nsamples - observables_avg.Pex * observables_avg.Pex;
+
+        fprintf(file_cooling_data, "%f,%f,%f,%f,%f,%f,%f,%f,%f\n", Tnew,
+                observables_avg.K, observables_var.K, observables_avg.V,
+                observables_var.V, observables_avg.E, observables_var.E,
+                observables_avg.Pex, observables_var.Pex);
+
+        fclose(file_trajectories_data);
+
+        printf("done with %d / %d\n", i+1, Tsteps);
     }
-    double pi= 3.14159265358979323846;
-    for (int i=0; i<bins; i++){
-        hist[i] = (L*L*L)*hist[i]/(4*pi*n_hist[i]*n_hist[i]*(n_hist[1]-n_hist[0])*N*N/2);
-    }
-    for (int i=0; i<bins; i++){
-        //printf("%f    %f\n",n_hist[i], hist[i]);
-        fprintf(file2, "%f    %f\n",n_hist[i], hist[i]);
-    }
-    //
+
+	radial_distribution_normalization(Ls, L, N, nsamples*nsep, nbins, rdist_bins, rdist_freq_ini);
+	radial_distribution_normalization(Ls, L, N, nsamples*nsep, nbins, rdist_bins, rdist_freq_fin);
+	for (int i = 0; i < nbins; i++) {
+		fprintf(file_radialdist_data, "%f,%f,%f\n", rdist_bins[i], rdist_freq_ini[i], rdist_freq_fin[i]);
+	}
+
+    fclose(file_continuous_data);
+    free(filename_continuous_data);
+
+    fclose(file_cooling_data);
+    free(filename_cooling_data);
+
+	fclose(file_radialdist_data);
+	free(filename_radialdist_data);
 
     free(past);
     free(future);
-    free(data);
-    free(data_vmd);
     free(VF);
-    free(lambda);
-    free(vel_avg);
-    free(vel_var);
-    free(frz_avg);
-    free(frz_var);
+	free(rdist_bins);
+	free(rdist_freq_ini);
+	free(rdist_freq_fin);
+
+    return 0;
+}
+
+int radial_distribution_bins(double Ls, double L, int nbins, double *bins)
+{
+    for (int i = 0; i < nbins; i++){ 
+        bins[i] = i * Ls * L / nbins;
+    }
+
+	return 0;
+}
+
+int radial_distribution_normalization(double Ls, double L, long int N, int nsamples, int nbins, double *bins, double *freq)
+{
+	double Vol = L * L * L;
+	double dr = bins[1] - bins[0];
+
+    for (int i = 0; i < nbins; i++) {
+        freq[i] = Vol * freq[i] / (4 * M_PI * bins[i] * bins[i] * dr * N * N / 2) / nsamples;
+    }
+
+    return 0;
+}
+
+int rescale_expdecay(struct part *molec, long int N, double Told, double Tnew, double decay, double h)
+{
+    double alpha = sqrt(1 + (h/decay)*(Tnew - Told)/Told);
+
+    for (long int i = 0; i < N; i++) {
+        molec[i].vx *= alpha;
+        molec[i].vy *= alpha;
+        molec[i].vz *= alpha;
+    }
 
     return 0;
 }
 
 int parse_options(char ** argv, int argc, int *n, double *L, double *dr,
-                  double *h, double *T, int *niter, char **outdir)
+                  double *h, double *Ti, double *Tf, int *Tsteps,
+                  int *nsamples, int *nsep, int *ntherm, char **outdir)
 {
-    const char *usage = "usage: app [-n nparticles] [-L boxsize] [-dr spacing] [-h timestep] [-T temperature] [-niter niter] [-o outdir]\n"
+    const char *usage = "usage: app [-n nparticles] [-L boxsize] [-dr spacing] [-h timestep]"
+                        " [-Ti temperature] [-Tf temperature] [-Tsteps steps] [-nsamples samples]"
+                        " [-nsep separation] [-ntherm thermalization steps] [-o outdir]\n"
                         "  -n nparticles: linear number of particles (total particles = n*n*n)\n"
                         "  -L boxsize: size of simulation box\n"
                         "  -dr spacing: spacing of the discretization of the force and potential\n"
                         "  -h timestep: discrete timestep of numerical integration\n"
-                        "  -T temperature: initial temperature of the system\n"
-                        "  -niter niter: number of iterations\n"
+                        "  -Ti temperature: initial temperature of the system\n"
+                        "  -Tf temperature: final temperature of the system\n"
+                        "  -Tsteps nsteps: number of steps between initial and final temperature\n"
+                        "  -nsamples samples: number of samples to take at each temperature\n"
+                        "  -nsep separation: number of points between consecutive samples\n"
+                        "  -ntherm thermalization steps: number of steps for thermalization\n"
                         "  -o outdir: output directory where generated files will be stored\n";
-    int nsat, Lsat, drsat, hsat, Tsat, nitersat, osat;
-    nsat = Lsat = drsat = hsat = Tsat = nitersat = osat = 0;
+    int nsat, Lsat, drsat, hsat, Tisat, Tfsat, Tstepssat, nsamplessat, nsepsat, nthermsat, osat;
+    nsat = Lsat = drsat = hsat = Tisat = Tfsat = Tstepssat = nsamplessat = nsepsat = nthermsat = osat = 0;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-n") == 0) {
             if (argc <= i+1) {
@@ -237,24 +267,60 @@ int parse_options(char ** argv, int argc, int *n, double *L, double *dr,
             *h = atof(argv[i+1]);
             i++;
             hsat = 1;
-        } else if (strcmp(argv[i], "-T") == 0) {
+        } else if (strcmp(argv[i], "-Ti") == 0) {
             if (argc <= i+1) {
                 printf("failed option parsing.\n");
                 printf("%s", usage);
                 return 1;
             }
-            *T = atof(argv[i+1]);
+            *Ti = atof(argv[i+1]);
             i++;
-            Tsat = 1;
-        } else if (strcmp(argv[i], "-niter") == 0) {
+            Tisat = 1;
+        } else if (strcmp(argv[i], "-Tf") == 0) {
             if (argc <= i+1) {
                 printf("failed option parsing.\n");
                 printf("%s", usage);
                 return 1;
             }
-            *niter = atoi(argv[i+1]);
+            *Tf = atof(argv[i+1]);
             i++;
-            nitersat = 1;
+            Tfsat = 1;
+        } else if (strcmp(argv[i], "-Tsteps") == 0) {
+            if (argc <= i+1) {
+                printf("failed option parsing.\n");
+                printf("%s", usage);
+                return 1;
+            }
+            *Tsteps = atoi(argv[i+1]);
+            i++;
+            Tstepssat = 1;
+        } else if (strcmp(argv[i], "-nsamples") == 0) {
+            if (argc <= i+1) {
+                printf("failed option parsing.\n");
+                printf("%s", usage);
+                return 1;
+            }
+            *nsamples = atoi(argv[i+1]);
+            i++;
+            nsamplessat = 1;
+        } else if (strcmp(argv[i], "-nsep") == 0) {
+            if (argc <= i+1) {
+                printf("failed option parsing.\n");
+                printf("%s", usage);
+                return 1;
+            }
+            *nsep = atoi(argv[i+1]);
+            i++;
+            nsepsat = 1;
+        } else if (strcmp(argv[i], "-ntherm") == 0) {
+            if (argc <= i+1) {
+                printf("failed option parsing.\n");
+                printf("%s", usage);
+                return 1;
+            }
+            *ntherm = atoi(argv[i+1]);
+            i++;
+            nthermsat = 1;
         } else if (strcmp(argv[i], "-o") == 0) {
             if (argc <= i+1) {
                 printf("failed option parsing.\n");
@@ -267,7 +333,7 @@ int parse_options(char ** argv, int argc, int *n, double *L, double *dr,
         }
     }
 
-    if (!(nsat && Lsat && drsat && hsat && Tsat && nitersat && osat)) {
+    if (!(nsat && Lsat && drsat && hsat && Tisat && Tfsat && Tstepssat && nsamplessat && nsepsat && nthermsat && osat)) {
         printf("missing required arguments.\n");
         printf("%s", usage);
         return 1;
@@ -275,3 +341,4 @@ int parse_options(char ** argv, int argc, int *n, double *L, double *dr,
 
     return 0;
 }
+
