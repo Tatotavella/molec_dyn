@@ -22,15 +22,14 @@ int main(int argc, char **argv)
     int particul = 0;
 
     //Dist radial
-    int bins = 80;
+    int bins = 100;
     double hist[bins];
     double n_hist[bins];
-    float Ls = 6;
     for (int i=0; i<bins; i++){ 
         hist[i] = 0;
     }
     for (int i=0; i<bins; i++){
-        n_hist[i] = i*Ls*L/bins;
+        n_hist[i] = i*0.5*L/bins;
     }
     //
     
@@ -45,11 +44,9 @@ int main(int argc, char **argv)
         future[i].m = 1;
     }
     init_rv(past, N, &maxwell_boltzmann, L, T);
-    //dist_radial(past,N,L,bins,hist,n_hist,Ls);
     double *VF = malloc(3*Nr * sizeof(*VF));
     make_table(&funcion_LJ, &funcion_fuerza, Nr, L, VF);
     eval_f(past, N, L, VF, Nr, data);
-
     double **vel_avg = malloc((Niter+1) * sizeof(*vel_avg));
     double **vel_var = malloc((Niter+1) * sizeof(*vel_var));
     double **frz_avg = malloc((Niter+1) * sizeof(*frz_avg));
@@ -69,7 +66,7 @@ int main(int argc, char **argv)
         lambda[i] = ord_verlet(past, N, L);
 
         
-        dist_radial(past,N,L,bins,hist,n_hist,Ls);
+        dist_radial(past,N,L,bins,hist);
         
         
         vel_avg[i] = malloc(3 * sizeof(double));
@@ -165,7 +162,7 @@ int main(int argc, char **argv)
     }
     double pi= 3.14159265358979323846;
     for (int i=0; i<bins; i++){
-        hist[i] = (L*L*L)*hist[i]/(4*pi*n_hist[i]*n_hist[i]*(n_hist[1]-n_hist[0])*N);
+        hist[i] = (L*L*L)*hist[i]/(4*pi*n_hist[i]*n_hist[i]*(n_hist[1]-n_hist[0])*N*N*0.5);
     }
     for (int i=0; i<bins; i++){
         //printf("%f    %f\n",n_hist[i], hist[i]);

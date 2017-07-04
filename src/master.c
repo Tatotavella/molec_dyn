@@ -402,7 +402,7 @@ int system_energy(struct part* molec, long int N, double *e)
 }
 
 
-int dist_radial(struct part *molec, long int N, double L, int bins, int hist[]){
+int dist_radial(struct part *molec, long int N, double L, int bins, double hist[]){
 
 	/*
 	*	Esta función genera la distribucion radial discretizando L en #bins.
