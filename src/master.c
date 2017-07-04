@@ -106,7 +106,7 @@ double funcion_fuerza(double r)
  }
 
 
-int init_rv(struct part *molec, long int N, double (*func)(double,double), double L, double T)
+int init_rv(struct part *molec, long int N, double (*func)(double,double), double L, double T, struct thermo_data *data)
 {
     int n = round(cbrt(N));
     double a = L/n;
@@ -114,6 +114,7 @@ int init_rv(struct part *molec, long int N, double (*func)(double,double), doubl
     double vx_avg = 0;
     double vy_avg = 0;
     double vz_avg = 0;
+    (*data).K = 0;
 
     for (long int i = 0; i < N; i++) {
         long int l = i / (n * n);
@@ -139,6 +140,8 @@ int init_rv(struct part *molec, long int N, double (*func)(double,double), doubl
         molec[i].vx -= vx_avg;
         molec[i].vy -= vy_avg;
         molec[i].vz -= vz_avg;
+
+        (*data).K += (molec[i].vx * molec[i].vx + molec[i].vy * molec[i].vy + molec[i].vz * molec[i].vz) * molec[i].m / 2;
     }
 
     return 0;

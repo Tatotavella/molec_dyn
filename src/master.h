@@ -33,7 +33,7 @@ struct thermo_data {
    double Pex; //Presion de exceso
 };
 
-int init_rv(struct part *molec, long int N, double (*func)(double,double), double L, double T);
+int init_rv(struct part *molec, long int N, double (*func)(double,double), double L, double T, struct thermo_data *data);
 // Recibe una funcion y asigna al azar las velocidades de la distribucion "func" que recive (v,T).
 // Ordena las particulas equiespaciadas.
 
