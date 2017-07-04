@@ -102,7 +102,7 @@ int main(int argc, char **argv)
           float a=0;
           float b=4;
           int n=N;//numero de datos que se le pasan a histograma es igual al numero de molec, una vel por molecula
-          int numbin=10;
+          int numbin=20;
           double bin=(b-a)/numbin;
 	  //armo vector de velocidades
 	  double *vel=malloc(N*sizeof(double));
