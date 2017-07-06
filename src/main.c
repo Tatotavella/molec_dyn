@@ -19,14 +19,22 @@ int main(int argc, char **argv)
     /* Parse options and setup all program configuration options */
     int n, N, Nr, Tsteps, nsamples, nsep, ntherm;
     double L, dr, h, Ti, Tf, dT;
-    char *outdir, *filename_continuous_data, *filename_cooling_data, *filename_radialdist_data, *filename_trajectories_data;
-    FILE *file_continuous_data, *file_cooling_data, *file_radialdist_data, *file_trajectories_data;
+    char *outdir, *filename_continuous_data, *filename_cooling_data, *filename_radialdist_data, *filename_trajectories_data, *filename_parameters;
+    FILE *file_continuous_data, *file_cooling_data, *file_radialdist_data, *file_trajectories_data, *file_parameters;
 
     int ret = parse_options(argv, argc, &n, &L, &dr, &h, &Ti, &Tf, &Tsteps, &nsamples, &nsep, &ntherm, &outdir);
     if (ret) return 1;
     N = n*n*n;
     Nr = L/dr;
     dT = -(Ti - Tf)/(Tsteps - 1);
+
+    filename_parameters = malloc((strlen(outdir) + 20) * sizeof(*filename_parameters));
+    sprintf(filename_parameters, "%s/parameters.txt", outdir);
+    file_parameters = fopen(filename_parameters, "w");
+    fprintf(file_parameters, "N:%d\nL:%f\ndr:%f\nh:%f\nTi:%f\nTf:%f\nTsteps:%d\nnsamples:%d\nnsep:%d\nntherm:%d\n",
+            N, L, dr, h, Ti, Tf, Tsteps, nsamples, nsep, ntherm);
+    fclose(file_parameters);
+    free(filename_parameters);
 
     filename_continuous_data = malloc((strlen(outdir) + 20) * sizeof(*filename_continuous_data));
     sprintf(filename_continuous_data, "%s/continuous_data.csv", outdir);
