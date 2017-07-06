@@ -404,62 +404,51 @@ int system_energy(struct part* molec, long int N, double *e)
     return 0;
 }
 
-int dist_radial(struct part *molec, long int N, double L, int bins, double hist[], double n_hist[], float Ls){
+
+int dist_radial(struct part *molec, long int N, double L, int bins, double hist[]){
 
 	/*
 	*	Esta función genera la distribucion radial discretizando L en #bins.
 	*	El resultado se lo suma al vector hist (sin normalizar)
 	*	Elemplo:
-	*		int bins = 500;
-	*		double hist[bins];
-	*		float Ls = 3;
+	*		int bins = 100;
+	*		int hist[bins];
 	*
-	*		Se inicializa la primera vez con todo en 0.
+	*		//Se inicializa la primera vez con todo en 0.
 	*		for (i=0; i<bins; i++){ 
-	*			hist[i] = 0;
+	*		hist[i] = 0;
 	*		}
 	*
 	*		//n_hist representa es el 'eje x' del histograma.
-	*		double n_hist[bins];
+	*		float n_hist[bins];
 	*		for (i=0; i<bins; i++){
-	*			n_hist[i] = i*Ls*L/bins;
+	*			n_hist[i] = i*(L/2)/bins;
 	*		}
-	*
-	*		dist_radial(molec,N,L,bins,hist,n_hist);		
+	*		dist_radial(molec,N,L,bins,hist);		
 	*		for (i=0; i<bins; i++){
-	*			printf("%f    %f\n",n_hist[i], hist[i]);
+	*			printf("%f    %i\n",n_hist[i], hist[i]);
 	*		}
 	*/
 
-
-	int a,b,c,i,j;
+	int i,j, H;
 	double x1,x2,y1,y2,z1,z2,dx,dy,dz;
-	double dist = 0;
-	int H;
-
-	// Genero el histograma.
-
-	for (a=-Ls; a<=Ls; a++)
+	double a;
+	// Genero el vector de distancias.
+	for (i=0; i<N; i++)
 	{
-		for (b=-Ls; b<=Ls; b++)
+		for (j=0; j<i; j++)
 		{
-			for (c=-Ls; c<=Ls; c++)
-			{	
-				for (i=0; i<N; i++)
-				{
-					for (j=0; j<i; j++)
-					{
-						x1 = molec[i].x, y1 = molec[i].y, z1 = molec[i].z; 
-						x2 = molec[j].x+a*L, y2 = molec[j].y+b*L, z2 = molec[j].z+c*L;
-						dx = x2-x1, dy = y2-y1, dz = z2-z1;
-						dist = sqrt(dx*dx+dy*dy+dz*dz);
-						if (dist <= Ls*L) {
-							H = (int)(bins*dist/(Ls*L));
-							hist[H] = hist[H]+1;
-						}
-					}
-				}
-			}	
+			x1 = molec[i].x, y1 = molec[i].y, z1 = molec[i].z; 
+			x2 = molec[j].x, y2 = molec[j].y, z2 = molec[j].z;
+			dx = x2-x1, dy = y2-y1, dz = z2-z1;
+			dx = dx - L*(int)(2*dx/L);
+			dy = dy - L*(int)(2*dy/L);
+			dz = dz - L*(int)(2*dz/L);
+			a = sqrt(dx*dx+dy*dy+dz*dz);
+			if (a<=0.5*L){
+				H = (int)(bins*a/(0.5*L));
+				hist[H] = hist[H]+1;
+			}
 		}
 	}
 
