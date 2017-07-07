@@ -10,23 +10,31 @@ int parse_options(char ** argv, int argc, int *n, double *L, double *dr,
                   double *h, double *Ti, double *Tf, int *Tsteps,
                   int *nsamples, int *nsep, int *ntherm, char **outdir);
 
-int radial_distribution_bins(double Ls, double L, int nbins, double *bins);
+int radial_distribution_bins(double L, int nbins, double *bins);
 
-int radial_distribution_normalization(double Ls, double L, long int N, int nsamples, int nbins, double *bins, double *freq);
+int radial_distribution_normalization(double L, long int N, int nsamples, int nbins, double *bins, double *freq);
 
 int main(int argc, char **argv)
 {
     /* Parse options and setup all program configuration options */
     int n, N, Nr, Tsteps, nsamples, nsep, ntherm;
     double L, dr, h, Ti, Tf, dT;
-    char *outdir, *filename_continuous_data, *filename_cooling_data, *filename_radialdist_data, *filename_trajectories_data;
-    FILE *file_continuous_data, *file_cooling_data, *file_radialdist_data, *file_trajectories_data;
+    char *outdir, *filename_continuous_data, *filename_cooling_data, *filename_radialdist_data, *filename_trajectories_data, *filename_parameters;
+    FILE *file_continuous_data, *file_cooling_data, *file_radialdist_data, *file_trajectories_data, *file_parameters;
 
     int ret = parse_options(argv, argc, &n, &L, &dr, &h, &Ti, &Tf, &Tsteps, &nsamples, &nsep, &ntherm, &outdir);
     if (ret) return 1;
     N = n*n*n;
     Nr = L/dr;
     dT = -(Ti - Tf)/(Tsteps - 1);
+
+    filename_parameters = malloc((strlen(outdir) + 20) * sizeof(*filename_parameters));
+    sprintf(filename_parameters, "%s/parameters.txt", outdir);
+    file_parameters = fopen(filename_parameters, "w");
+    fprintf(file_parameters, "N:%d\nL:%f\ndr:%f\nh:%f\nTi:%f\nTf:%f\nTsteps:%d\nnsamples:%d\nnsep:%d\nntherm:%d\n",
+            N, L, dr, h, Ti, Tf, Tsteps, nsamples, nsep, ntherm);
+    fclose(file_parameters);
+    free(filename_parameters);
 
     filename_continuous_data = malloc((strlen(outdir) + 20) * sizeof(*filename_continuous_data));
     sprintf(filename_continuous_data, "%s/continuous_data.csv", outdir);
@@ -60,11 +68,10 @@ int main(int argc, char **argv)
     observables.E = observables.K + observables.V;
 
 	int nbins = 500;
-	double Ls = 1;
 	double *rdist_bins = malloc(nbins * sizeof(*rdist_bins));
 	double *rdist_freq_ini = malloc(nbins * sizeof(*rdist_freq_ini));
 	double *rdist_freq_fin = malloc(nbins * sizeof(*rdist_freq_fin));
-	radial_distribution_bins(Ls, L, nbins, rdist_bins);
+	radial_distribution_bins(L, nbins, rdist_bins);
 	for (int i = 0; i < nbins; i++) {
 		rdist_freq_ini[i] = 0;
 		rdist_freq_fin[i] = 0;
@@ -107,9 +114,9 @@ int main(int argc, char **argv)
                 evolution_step(&past, &future, N, VF, Nr, L, h, &observables);
                 fprintf(file_continuous_data, "%f,%f,%f,%f\n", observables.K, observables.V, observables.E, observables.Pex);
 				if (i == 0) {
-					dist_radial(past, N, L, nbins, rdist_freq_ini, rdist_bins, Ls);
+					dist_radial(past, N, L, nbins, rdist_freq_ini);
 				} else if (i == Tsteps-1) {
-					dist_radial(past, N, L, nbins, rdist_freq_fin, rdist_bins, Ls);
+					dist_radial(past, N, L, nbins, rdist_freq_fin);
 				}
             }
 
@@ -151,8 +158,8 @@ int main(int argc, char **argv)
         printf("done with %d / %d\n", i+1, Tsteps);
     }
 
-	radial_distribution_normalization(Ls, L, N, nsamples*nsep, nbins, rdist_bins, rdist_freq_ini);
-	radial_distribution_normalization(Ls, L, N, nsamples*nsep, nbins, rdist_bins, rdist_freq_fin);
+	radial_distribution_normalization(L, N, nsamples*nsep, nbins, rdist_bins, rdist_freq_ini);
+	radial_distribution_normalization(L, N, nsamples*nsep, nbins, rdist_bins, rdist_freq_fin);
 	for (int i = 0; i < nbins; i++) {
 		fprintf(file_radialdist_data, "%f,%f,%f\n", rdist_bins[i], rdist_freq_ini[i], rdist_freq_fin[i]);
 	}
@@ -176,16 +183,16 @@ int main(int argc, char **argv)
     return 0;
 }
 
-int radial_distribution_bins(double Ls, double L, int nbins, double *bins)
+int radial_distribution_bins(double L, int nbins, double *bins)
 {
     for (int i = 0; i < nbins; i++){ 
-        bins[i] = i * Ls * L / nbins;
+        bins[i] = i * L / 2 / nbins;
     }
 
 	return 0;
 }
 
-int radial_distribution_normalization(double Ls, double L, long int N, int nsamples, int nbins, double *bins, double *freq)
+int radial_distribution_normalization(double L, long int N, int nsamples, int nbins, double *bins, double *freq)
 {
 	double Vol = L * L * L;
 	double dr = bins[1] - bins[0];
