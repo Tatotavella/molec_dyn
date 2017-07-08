@@ -28,30 +28,27 @@ rho = (n / L)**3
 files_full_path = root_path + '/trajectories_*_data.csv'
 files_list = glob.glob(files_full_path)
 
-idx = -1
-filename = files_list[idx]
-print(filename)
+for idx in range(0,len(files_list)):
+ filename = files_list[idx]
 
-filename = sys.argv[2]
+ lindemann = np.zeros(nsamples)
+ times = np.arange(nsamples)
 
-lindemann = np.zeros(nsamples)
-times = np.arange(nsamples)
+ x = np.zeros(N)
+ y = np.zeros(N)
+ z = np.zeros(N)
+ xold = np.zeros(N)
+ yold = np.zeros(N)
+ zold = np.zeros(N)
+ x0 = np.zeros(N)
+ y0 = np.zeros(N)
+ z0 = np.zeros(N)
+ Rij = np.zeros((N, N))
+ RijVar = np.zeros((N, N))
+ Delta = np.zeros((N, N))
 
-x = np.zeros(N)
-y = np.zeros(N)
-z = np.zeros(N)
-xold = np.zeros(N)
-yold = np.zeros(N)
-zold = np.zeros(N)
-x0 = np.zeros(N)
-y0 = np.zeros(N)
-z0 = np.zeros(N)
-Rij = np.zeros((N, N))
-RijVar = np.zeros((N, N))
-Delta = np.zeros((N, N))
-
-time = 0
-with open(filename, 'r') as f:
+ time = 0
+ with open(filename, 'r') as f:
     for line in f:
         val = line.split(',')
         pid = int(val[0])
@@ -82,11 +79,13 @@ with open(filename, 'r') as f:
             time += 1
             print('done: {}/{}'.format(time, nsamples))
 
-# guardar data
-np.save(filename + '_lindemann', np.array([times, lindemann]))
+ # guardar data
+ np.save(filename + '_lindemann', np.array([times, lindemann]))
 
-# grafico
-plt.figure(1)
-plt.plot(times, lindemann, '-')
-plt.grid()
-plt.show()
+'''
+ # grafico
+ plt.figure(idx)
+ plt.plot(times, lindemann, '-')
+ plt.grid()
+ plt.show()
+'''
