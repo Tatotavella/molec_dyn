@@ -34,7 +34,9 @@ print(filename)
 
 filename = sys.argv[2]
 
+lindemann = np.zeros(nsamples)
 times = np.arange(nsamples)
+
 x = np.zeros(N)
 y = np.zeros(N)
 z = np.zeros(N)
@@ -44,8 +46,10 @@ zold = np.zeros(N)
 x0 = np.zeros(N)
 y0 = np.zeros(N)
 z0 = np.zeros(N)
-Rij = np.zeros((N, N, nsamples))
-Rij2 = np.zeros((N, N, nsamples))
+Rij = np.zeros((N, N))
+RijVar = np.zeros((N, N))
+Delta = np.zeros((N, N))
+
 time = 0
 with open(filename, 'r') as f:
     for line in f:
@@ -70,20 +74,13 @@ with open(filename, 'r') as f:
             dx = np.subtract.outer(x, x)
             dy = np.subtract.outer(y, y)
             dz = np.subtract.outer(z, z)
-            dr2 = np.reshape(dx**2 + dy**2 + dz**2, (N, N, 1))
-            Rij[:, :, time:] += np.sqrt(dr2)
-            Rij2[:, :, time:] += dr2
+            dr = np.sqrt(dx**2 + dy**2 + dz**2)
+            Delta = dr - Rij
+            Rij += Delta / (time + 1)
+            RijVar += Delta * (dr - Rij)
+            lindemann[time] = np.nansum(np.sqrt(RijVar / (time + 1)) / Rij) / (N*(N-1))
             time += 1
-
-for time in times:
-    Rij[:, :, time] /= (time + 1)
-    Rij2[:, :, time] /= (time + 1)
-
-# calculo coeficiente lindemann del tiempo time
-lindemann = np.zeros(nsamples)
-L = (np.sqrt(Rij2 - Rij**2) / Rij) / (N*(N-1))
-L[np.isnan(L)] = 0
-lindemann = np.sum(L, axis=(0, 1))
+            print('done: {}/{}'.format(time, nsamples))
 
 # guardar data
 np.save(filename + '_lindemann', np.array([times, lindemann]))
