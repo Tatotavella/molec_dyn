@@ -1,3 +1,6 @@
+#ifndef MASTER_H
+#define MASTER_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -152,3 +155,5 @@ int histograma(double *vel, float *hist, int n, float a, float b, int numbin);
     //[a,b] intervalo ext inf y sup
     //numcol: numero de columnas
     */
+
+#endif //MASTER_H
